@@ -1,6 +1,6 @@
 # 当前学习进度
 
-更新时间：2026-09-23T21:07:44+08:00，Asia/Shanghai。记录依据：当前会话、学习者提供的日志，以及本地文件检查。本次新增的是维护方式，驾驶课实践/理解状态未升级。
+更新时间：2026-09-23T21:13:14+08:00，Asia/Shanghai。记录依据：当前会话、学习者提供的日志，以及本地文件和 GitHub 核验。本次新增的是仓库上传结果，驾驶课实践/理解状态未升级。
 
 这是唯一的当前接续点。教学约定见 [AGENTS.md](AGENTS.md)，长期方向见 [路线图](learning/ROADMAP.md)，历史证据见 [学习记录](learning/LEARNING_LOG.md)。
 
@@ -74,7 +74,7 @@
 - 2026-09-23 核实版本：highway-env `1.12.2.dev0`、gymnasium `1.3.0`、numpy `1.26.4`、pygame-ce `2.5.8`、noise `1.2.2`。
 - 正常命令：在项目目录、已激活 `py310` 的终端运行 `python demo.py`。
 - 曾遇到 pip 构建 `noise` 缺少 MSVC；使用 `conda install -c conda-forge noise` 后，再执行 `python -m pip install -e .` 成功。
-- 整理时源码 HEAD：`c978b198cddcbd27aa62513fc3e6a92bb53f9f5d`；用户的 `demo.py` 是未跟踪练习文件，不能把 HEAD 当作其版本。
+- HighwayEnv 上游基线：`c978b198cddcbd27aa62513fc3e6a92bb53f9f5d`。用户的 `demo.py` 已随个人教学资料提交并上传，首次上传提交为 `d39c77934e119f24f5ae5ebfc209b5ae1a635078`。
 
 ## 保存节奏
 
@@ -84,4 +84,8 @@
 
 ## 代码与资料仓库
 
-用户指定的个人仓库：[chasen2041maker/highwayenv-learning](https://github.com/chasen2041maker/highwayenv-learning)。此次授权上传当前项目、`demo.py`、教学文档、实验依据及仓库内进度维护技能；保留 HighwayEnv 上游来源、历史和许可证。上传状态在实际推送核验后补记，不据此提升驾驶课的学习状态。
+用户指定的个人仓库：[chasen2041maker/highwayenv-learning](https://github.com/chasen2041maker/highwayenv-learning)。已按此次授权上传当前项目、`demo.py`、教学文档、实验依据及仓库内进度维护技能，保留 HighwayEnv 上游来源、历史和许可证。
+
+首次上传提交：[d39c779](https://github.com/chasen2041maker/highwayenv-learning/commit/d39c77934e119f24f5ae5ebfc209b5ae1a635078)。已通过 GitHub API 核对当时 `main` 与本地提交一致，并确认主要文件存在。本地 `origin` 指向个人仓库，`upstream` 指向 Farama Foundation 的 HighwayEnv，`main` 跟踪 `origin/main`。
+
+此次是代码与资料归档：已检查练习脚本语法、文档链接和技能结构；使用 `[skip ci]` 避免首次导入触发上游整套 CI/部署流程，没有宣称这些流程已经通过。进度技能仍按教学节点维护本地记录，后续提交或推送按实际任务授权执行。
