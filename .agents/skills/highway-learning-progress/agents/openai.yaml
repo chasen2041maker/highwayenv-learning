@@ -1,0 +1,7 @@
+interface:
+  display_name: "HighwayEnv 教学进度维护"
+  short_description: "在教学小节和实验反馈后保存 HighwayEnv 学习进度与证据"
+  default_prompt: "使用 $highway-learning-progress 根据本次对话与当前代码更新学习进度，分别记录实践结果、理解证据和下次接续点。"
+
+policy:
+  allow_implicit_invocation: true

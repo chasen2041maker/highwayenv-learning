@@ -1,3 +1,30 @@
+# highwayenv-learning
+
+通过 HighwayEnv 仿真，从实践学习自动驾驶决策、车辆控制和强化学习。
+
+这是个人学习仓库，基于 [Farama Foundation / HighwayEnv](https://github.com/Farama-Foundation/HighwayEnv) 源码开展练习，保留上游历史和 [MIT 许可证](LICENSE)。当前练习是根据前车距离选择加速、减速与保持速度的规则驾驶程序。
+
+## 学习入口
+
+- [运行脚本](demo.py)：车辆仿真、距离判断、目标速度档位和每局成绩单。
+- [当前学习进度](PROGRESS.md)：已做实验、待核对内容和下次接续点。
+- [学习路线](learning/ROADMAP.md)：从实践读源码，到规则策略、实验评测与强化学习。
+- [历史学习记录](learning/LEARNING_LOG.md)：按执行者区分的实验与理解证据。
+- [教学约定](AGENTS.md)与[进度维护技能](.agents/skills/highway-learning-progress/SKILL.md)：每个教学小节或新实验结果后的记录方式。
+
+## 运行当前练习
+
+在已安装 Python 3.10 或以上及依赖的环境中，于仓库根目录执行：
+
+```shell
+python -m pip install -e .
+python demo.py
+```
+
+Windows 使用 Conda 时，如果 `noise` 安装报缺少 C++ 编译工具，可先运行 `conda install -c conda-forge noise`，再重新安装项目。当前本机环境与安装记录见 [PROGRESS.md](PROGRESS.md)。
+
+## HighwayEnv 上游说明
+
 [![Python](https://img.shields.io/pypi/pyversions/highway-env.svg)](https://badge.fury.io/py/highway-env)
 [![PyPI](https://badge.fury.io/py/highway-env.svg)](https://badge.fury.io/py/highway-env)
 [![build](https://github.com/Farama-Foundation/HighwayEnv/actions/workflows/build.yml/badge.svg)](https://github.com/Farama-Foundation/HighwayEnv/actions/workflows/build.yml)
