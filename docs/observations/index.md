@@ -154,7 +154,7 @@ The RGB to grayscale conversion is a weighted sum, configured by the `weights` p
             "type": "GrayscaleObservation",
             "observation_shape": (128, 64),
             "stack_size": 4,
-            "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion
+            "weights": [0.2989, 0.5870, 0.1140],  # RGB 转换的权重
             "scaling": 1.75,
         },
         "policy_frequency": 2

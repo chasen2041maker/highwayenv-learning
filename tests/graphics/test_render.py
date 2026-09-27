@@ -51,11 +51,10 @@ def test_obs_grayscale(env_spec, stack_size=4):
 
 @pytest.mark.parametrize("cells", [3, 16, 60, 61, 62, 123])
 def test_render_lidar_observation(cells):
-    """Rendering a lidar observation draws one sector per cell.
+    """渲染激光雷达观察时，每个单元应绘制一个扇区。
 
-    Before v1.12.2, the angles were calculated by accumulating a float step,
-    which for some cell counts would produced one angle too many and the drawing
-    logic then result in an IndexError.
+    在 v1.12.2 之前，通过累加浮点步长计算角度；对于某些单元数量，
+    会多生成一个角度，导致绘图逻辑发生 IndexError。
     """
     env = gym.make(
         "highway-v0",

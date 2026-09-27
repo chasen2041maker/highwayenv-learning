@@ -1,0 +1,195 @@
+{
+  "recorded_at": "2026-09-24T15:12:54+08:00",
+  "executor": "助手独立验证，非学习者运行",
+  "script": "learning/demos/01_lane_change.py",
+  "script_sha256": "855e9dc527c87684f15b4d1354910e464c99a5f4706237efc812d782329ded20",
+  "conditions": {
+    "render_mode": null,
+    "seed": 0,
+    "lanes_count": 4,
+    "vehicles_count": 0,
+    "initial_lane_id": 1,
+    "policy_frequency": 1,
+    "duration": 10
+  },
+  "method": "调用实际示例 main(render_mode=None)，记录每次 step 的输入与结果；断言单次指令、目标车道与实际位置、无其他车辆及时间上限。",
+  "checks_passed": true,
+  "records": [
+    {
+      "decision": 1,
+      "action": 1,
+      "before": {
+        "target_lane": 1,
+        "y_m": 4.0
+      },
+      "after": {
+        "target_lane": 1,
+        "y_m": 4.0
+      },
+      "simulation_seconds": 1.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 2,
+      "action": 1,
+      "before": {
+        "target_lane": 1,
+        "y_m": 4.0
+      },
+      "after": {
+        "target_lane": 1,
+        "y_m": 4.0
+      },
+      "simulation_seconds": 2.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 3,
+      "action": 2,
+      "before": {
+        "target_lane": 1,
+        "y_m": 4.0
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.408175017245719
+      },
+      "simulation_seconds": 3.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 4,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.408175017245719
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.953980454858225
+      },
+      "simulation_seconds": 4.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 5,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.953980454858225
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.9968378560116795
+      },
+      "simulation_seconds": 5.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 6,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.9968378560116795
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.999790719234783
+      },
+      "simulation_seconds": 6.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 7,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.999790719234783
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.999986323369189
+      },
+      "simulation_seconds": 7.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 8,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.999986323369189
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.999999110163596
+      },
+      "simulation_seconds": 8.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 9,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.999999110163596
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.999999942195214
+      },
+      "simulation_seconds": 9.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": false,
+      "crashed": false
+    },
+    {
+      "decision": 10,
+      "action": 1,
+      "before": {
+        "target_lane": 2,
+        "y_m": 7.999999942195214
+      },
+      "after": {
+        "target_lane": 2,
+        "y_m": 7.99999999624701
+      },
+      "simulation_seconds": 10.0,
+      "road_vehicle_count": 1,
+      "terminated": false,
+      "truncated": true,
+      "crashed": false
+    }
+  ],
+  "stdout": "车道从左到右编号为 0、1、2、3；本次从编号 1 出发。\n编号 1 的车道中心 y=4 米，编号 2 的中心 y=8 米。\n初始横向位置 y： 4.0 米\n\n第 1 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 1\n行动后横向位置 y： 4.0 米\n\n第 2 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 1\n行动后横向位置 y： 4.0 米\n\n第 3 次决策： 向右变道一次 ，动作编号： 2\n行动后目标车道编号： 2\n行动后横向位置 y： 7.41 米\n\n第 4 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 7.95 米\n\n第 5 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n\n第 6 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n\n第 7 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n\n第 8 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n\n第 9 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n\n第 10 次决策： 保持目标车道和目标速度 ，动作编号： 1\n行动后目标车道编号： 2\n行动后横向位置 y： 8.0 米\n结束：达到 10 秒仿真时间上限。\n",
+  "limits": [
+    "没有检查真实窗口画面。",
+    "没有交通，不是自主避障或自主变道决策。",
+    "助手验证不能代表用户已运行或理解。"
+  ]
+}

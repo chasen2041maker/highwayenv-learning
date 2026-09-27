@@ -13,7 +13,7 @@ This is probably because you have not imported HighwayEnv yet. Importing Highway
 import gymnasium as gym
 import highway_env
 
-gym.register_envs(highway_env)  # this is a no-op to satisfy linters & IDE
+gym.register_envs(highway_env)  # 该调用不执行实际操作，仅用于满足静态检查器和 IDE
 ```
 
 The last line has no effect, it's simply telling your IDE and/or linter that `highway_env` is actually being used!
@@ -64,7 +64,7 @@ This creates a virtual environment and installs the project with all its depende
 ```bash
 uv sync --frozen --group test
 uv sync --frozen --group docs
-uv sync --frozen --group dev   # both test and docs
+uv sync --frozen --group dev   # 同时安装测试和文档依赖
 ```
 
 Then run commands through the managed environment with `uv run`:
@@ -86,11 +86,11 @@ Diff coverage only applies to lines you add or modify in `highway_env/`; it does
 Run the same checks locally before opening a PR:
 
 ```bash
-just coverage                              # both checks (diff vs origin/main)
-just coverage-total                        # ≥ 85% on highway_env
-just coverage-diff                         # ≥ 80% on changed highway_env lines
-just coverage-diff upstream                # diff vs upstream/main
-just coverage-diff upstream my-feature     # diff vs upstream/my-feature
+just coverage                              # 同时检查总覆盖率与差异覆盖率（对比 origin/main）
+just coverage-total                        # highway_env 的覆盖率至少为 85%
+just coverage-diff                         # highway_env 改动行的覆盖率至少为 80%
+just coverage-diff upstream                # 对比 upstream/main 的差异
+just coverage-diff upstream my-feature     # 对比 upstream/my-feature 的差异
 ```
 
 Pass `remote` and `branch` as positional arguments (`just coverage-diff upstream my-feature`). See [CONTRIBUTING.md](https://github.com/Farama-Foundation/HighwayEnv/blob/main/CONTRIBUTING.md#test-coverage) for the full contributor guide.
@@ -103,16 +103,16 @@ In order to also render these intermediate simulation frames, the following shou
 ```python
 import gymnasium as gym
 
-# Wrap the env by a RecordVideo wrapper
+# 使用 RecordVideo 包装环境
 env = gym.make("highway-v0")
 env = RecordVideo(env, video_folder="run",
-              episode_trigger=lambda e: True)  # record all episodes
+              episode_trigger=lambda e: True)  # 录制所有回合
 
-# Provide the video recorder to the wrapped environment
-# so it can send it intermediate simulation frames.
+# 将视频记录器提供给被包装的环境，
+# 使环境能够发送中间仿真帧。
 env.unwrapped.set_record_video_wrapper(env)
 
-# Record a video as usual
+# 像平常一样录制视频
 obs, info = env.reset()
 done = truncated = False:
 while not (done or truncated):

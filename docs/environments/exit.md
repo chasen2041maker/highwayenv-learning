@@ -52,7 +52,7 @@ See {ref}`road-neighbour-vehicles` for details.
     "vehicles_count": 20,
     "vehicles_density": 1.5,
     "controlled_vehicles": 1,
-    "duration": 18,  # [s]
+    "duration": 18,  # 单位：秒
     "simulation_frequency": 5,
     "scaling": 5,
 }

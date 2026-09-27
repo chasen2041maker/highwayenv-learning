@@ -1,5 +1,5 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+# 更多信息参阅 https://pre-commit.com
+# 更多钩子参阅 https://pre-commit.com/hooks.html
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

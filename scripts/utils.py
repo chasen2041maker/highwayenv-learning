@@ -15,7 +15,7 @@ def record_videos(env, video_folder="videos"):
         env, video_folder=video_folder, episode_trigger=lambda e: True
     )
 
-    # Capture intermediate frames
+    # 捕获中间帧
     env.unwrapped.set_record_video_wrapper(wrapped)
 
     return wrapped

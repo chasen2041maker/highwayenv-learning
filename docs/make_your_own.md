@@ -82,7 +82,7 @@ You should now be able to run the environment.
 import gymnasium as gym
 import highway_env
 
-gym.register_envs(highway_env)  # this is a no-op to satisfy linters & IDE
+gym.register_envs(highway_env)  # 该调用不执行实际操作，仅用于满足静态检查器和 IDE
 
 env = gym.make("your-env-v0")
 obs, info = env.reset()

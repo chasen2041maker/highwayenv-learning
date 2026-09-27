@@ -19,16 +19,16 @@ HighwayEnv follows [Gymnasium's convention](https://gymnasium.farama.org/main/ap
 ```python
 import gymnasium as gym
 
-# No rendering (fastest, for training with no visual information)
+# 不渲染：速度最快，适用于不使用视觉信息的训练
 env = gym.make("highway-v0")
 
-# Pixel array (for recording or pixel-based observations)
+# 像素数组：用于录像或基于像素的观察
 env = gym.make("highway-v0", render_mode="rgb_array")
 
-# Visual window (for human viewing, render as fast as possible)
+# 可见窗口：供人观看，尽可能快速渲染
 env = gym.make("highway-v0", render_mode="human")
 
-# Visual window (for human viewing, at pre-set framerate)
+# 可见窗口：供人观看，按预设帧率渲染
 env = gym.make("highway-v0", render_mode="human", config={"real_time_rendering": True})
 ```
 
@@ -53,7 +53,7 @@ The following config keys control rendering behavior. When `offscreen_rendering`
 These can be explicitly overridden in config when needed:
 
 ```python
-# rgb_array mode but also show a window (e.g. for debugging)
+# 使用 rgb_array 模式，同时显示窗口，例如用于调试
 env = gym.make("highway-v0", render_mode="rgb_array", config={"offscreen_rendering": False})
 ```
 

@@ -14,11 +14,10 @@ from highway_env.vehicle.objects import Obstacle
 
 class MergeEnv(AbstractEnv):
     """
-    A highway merge negotiation environment.
+    高速公路汇入协商环境。
 
-    The ego-vehicle is driving on a highway and approached a merge, with some vehicles incoming on the access ramp.
-    It is rewarded for maintaining a high speed and avoiding collisions, but also making room for merging
-    vehicles.
+    自车在高速公路上接近汇入口，入口匝道上有车辆准备汇入。
+    保持较高速度、避免碰撞以及为汇入车辆留出空间会获得奖励。
     """
 
     @classmethod
@@ -39,12 +38,12 @@ class MergeEnv(AbstractEnv):
 
     def _reward(self, action: int) -> float:
         """
-        The vehicle is rewarded for driving with high speed on lanes to the right and avoiding collisions
+        奖励车辆靠右高速行驶并避免碰撞。
 
-        But an additional altruistic penalty is also suffered if any vehicle on the merging lane has a low speed.
+        若汇入车道上有车辆速度较低，还会产生额外的利他性惩罚。
 
-        :param action: the action performed
-        :return: the reward of the state-action transition
+        :param action: 执行的动作
+        :return: 此次状态和动作转移对应的奖励
         """
         reward = sum(
             self.config.get(name, 0) * reward
@@ -68,7 +67,7 @@ class MergeEnv(AbstractEnv):
             "right_lane_reward": self.vehicle.lane_index[2] / 1,
             "high_speed_reward": scaled_speed,
             "lane_change_reward": action in [0, 2],
-            "merging_speed_reward": sum(  # Altruistic penalty
+            "merging_speed_reward": sum(  # 利他性惩罚
                 (vehicle.target_speed - vehicle.speed) / vehicle.target_speed
                 for vehicle in self.road.vehicles
                 if vehicle.lane_index == ("b", "c", 2)
@@ -77,7 +76,7 @@ class MergeEnv(AbstractEnv):
         }
 
     def _is_terminated(self) -> bool:
-        """The episode is over when a collision occurs or when the access ramp has been passed."""
+        """发生碰撞或驶过入口匝道时，本回合结束。"""
         return self.vehicle.crashed or bool(self.vehicle.position[0] > 370)
 
     def _is_truncated(self) -> bool:
@@ -89,14 +88,14 @@ class MergeEnv(AbstractEnv):
 
     def _make_road(self) -> None:
         """
-        Make a road composed of a straight highway and a merging lane.
+        创建由直线高速公路和汇入车道组成的道路。
 
-        :return: the road
+        :return: 道路
         """
         net = RoadNetwork()
 
-        # Highway lanes
-        ends = [150, 80, 80, 150]  # Before, converging, merge, after
+        # 高速公路车道
+        ends = [150, 80, 80, 150]  # 汇入前、接近主路、汇入段、汇入后
         c, s, n = LineType.CONTINUOUS_LINE, LineType.STRIPED, LineType.NONE
         y = [0, StraightLane.DEFAULT_WIDTH]
         line_type = [[c, s], [n, c]]
@@ -124,7 +123,7 @@ class MergeEnv(AbstractEnv):
                 ),
             )
 
-        # Merging lane
+        # 汇入车道
         amplitude = 3.25
         ljk = StraightLane(
             [0, 6.5 + 4 + 4], [ends[0], 6.5 + 4 + 4], line_types=[c, c], forbidden=True
@@ -160,9 +159,9 @@ class MergeEnv(AbstractEnv):
 
     def _make_vehicles(self) -> None:
         """
-        Populate a road with several vehicles on the highway and on the merging lane, as well as an ego-vehicle.
+        在高速公路和汇入车道上放置若干其他车辆及自车。
 
-        :return: the ego-vehicle
+        :return: 自车
         """
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(
@@ -192,22 +191,21 @@ class ConnectedLaneMergeEnv(ConnectedLaneNeighboursMixin, MergeEnv):
 
 class MergeGenericEnv(MergeEnv):
     """
-    A generic version of the merge environment.
-    Additionally supports changing:
-    - the number of lanes
-    - the number of vehicles
-    - the size of each section of the merging road
+    汇入环境的通用版本，还支持修改：
+    - 车道数量；
+    - 车辆数量；
+    - 汇入道路各段的长度。
 
-    Visual representation of each configurable merging road segment:
+    各可配置路段的示意图：
     ======================================
     --------------------------------------
     ======================================
-               /  __________/  (after)
-              /  / (parallel)
+               /  __________/  （汇入后）
+              /  / （平行段）
              /  /
-    ________/  /(converge)
+    ________/  /（接近主路段）
     __________/
-     (before)
+     （汇入前）
     """
 
     def __init__(self, config: dict = None, render_mode: str | None = None) -> None:
@@ -222,14 +220,14 @@ class MergeGenericEnv(MergeEnv):
             {
                 "lanes_count": 2,
                 "vehicles_count": 3,
-                # Parameters that define the size of each component of the merging road:
-                # Section before the merge segment (recommended to be >= 60)
+                # 定义汇入道路各部分长度的参数：
+                # 汇入前路段，建议长度至少为 60。
                 "before_merge_length": 150,
-                # Section converging closer to the highway
+                # 逐渐接近高速公路的路段。
                 "converge_merge_length": 80,
-                # Section where the vehicle can merge into the highway
+                # 车辆可以汇入高速公路的路段。
                 "parallel_merge_length": 80,
-                # Section after the merge segment (must be >= 90)
+                # 汇入后的路段，长度必须至少为 90。
                 "after_merge_length": 150,
             },
         )
@@ -341,8 +339,8 @@ class MergeGenericEnv(MergeEnv):
 
         spawned_positions = {i: [] for i in range(lanes)}
         spawned_positions[lanes - 1].append(ego_longitudinal)
-        safe_distance = 15.0  # safe distance to spawn vehicles from each other
-        tries = 10  # number of times it tries to spawn a vehicle
+        safe_distance = 15.0  # 车辆生成时彼此之间的安全间距。
+        tries = 10  # 尝试生成一辆车的次数。
         for _ in repeat(None, vehicles_count):
             for _ in repeat(None, tries):
                 random_lane_index = self.np_random.integers(lanes)
@@ -368,7 +366,7 @@ class MergeGenericEnv(MergeEnv):
         road.vehicles.append(merging_v)
 
     def _is_terminated(self) -> bool:
-        """The episode is over when a collision occurs or when the access ramp has been passed."""
+        """发生碰撞或驶过入口匝道时，本回合结束。"""
         return self.vehicle.crashed or self.vehicle.position[0] > self.end_position
 
     def _is_truncated(self) -> bool:

@@ -1,5 +1,5 @@
 # https://pre-commit.com
-# This GitHub Action assumes that the repo contains a valid .pre-commit-config.yaml file.
+# 此 GitHub Action 要求仓库包含有效的 .pre-commit-config.yaml 文件。
 name: pre-commit
 on:
   pull_request:

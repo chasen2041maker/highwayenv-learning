@@ -1,0 +1,31 @@
+{
+  "recorded_at": "2026-09-26T17:50:50+08:00",
+  "executor": "assistant",
+  "source": "通过 PowerShell 向现有 py310 解释器传入临时脚本，调用本地项目；没有创建或修改学习者的实验脚本。",
+  "python": "D:\\miniconda\\envs\\py310\\python.exe",
+  "environment": "highway-v0",
+  "explicit_config": {
+    "action": {"type": "ContinuousAction"},
+    "vehicles_count": 0,
+    "policy_frequency": 1
+  },
+  "reset_seed": 0,
+  "render_mode": null,
+  "observed_simulation_frequency": 15,
+  "input_action": [0.5, -0.2],
+  "input_dtype": "float32",
+  "action_space": "Box(-1.0, 1.0, (2,), float32)",
+  "get_action_result_rounded_4dp": {
+    "acceleration_mps2": 2.5,
+    "steering_rad": -0.1571
+  },
+  "steps_called": 1,
+  "simulation_time_s": 1.0,
+  "speed_before_mps": 25.0,
+  "speed_after_mps": 27.5,
+  "speed_delta_mps": 2.5,
+  "crashed": false,
+  "terminated": false,
+  "truncated": false,
+  "scope": "验证默认双轴连续动作的换算和一次 step 的速度变化。仅单步、无其他车辆、未渲染，不是完整回合、变道策略评测或学习者运行结果。"
+}

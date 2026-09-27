@@ -32,11 +32,11 @@ Polytope = Tuple[np.ndarray, List[np.ndarray]]
 
 class IntervalVehicle(LinearVehicle):
     """
-    Estimator for the interval-membership of a LinearVehicle under parameter uncertainty.
+    在参数不确定时，估计 LinearVehicle 状态所属的区间。
 
-    The model trajectory is stored in a model_vehicle, and the lower and upper bounds of the states are stored
-    in a min_vehicle and max_vehicle. Note that these vehicles do not follow a proper Vehicle dynamics, and
-    are only used for storage of the bounds.
+    模型轨迹保存在 model_vehicle 中，状态下界和上界分别保存在
+    min_vehicle 和 max_vehicle 中。这些车辆对象不遵循正常的车辆动力学，
+    只用于存储边界。
     """
 
     def __init__(
@@ -55,8 +55,8 @@ class IntervalVehicle(LinearVehicle):
         data: dict = None,
     ) -> None:
         """
-        :param theta_a_i: The interval of possible acceleration parameters
-        :param theta_b_i: The interval of possible steering parameters
+        :param theta_a_i: 加速度参数的可能取值区间
+        :param theta_b_i: 转向参数的可能取值区间
         """
         super().__init__(
             road,
@@ -116,26 +116,26 @@ class IntervalVehicle(LinearVehicle):
 
     def observer_step(self, dt: float) -> None:
         """
-        Step the interval observer dynamics
+        推进一步区间观测器的动力学。
 
-        :param dt: timestep [s]
+        :param dt: 时间步长，单位为秒
         """
-        # Input state intervals
+        # 输入状态区间
         position_i = self.interval.position
         v_i = self.interval.speed
         psi_i = self.interval.heading
 
-        # Features interval
+        # 特征区间
         front_interval = self.get_front_interval()
 
-        # Acceleration features
+        # 加速度特征
         phi_a_i = np.zeros((2, 3))
         phi_a_i[:, 0] = [0, 0]
         if front_interval:
             phi_a_i[:, 1] = interval_negative_part(
                 intervals_diff(front_interval.speed, v_i)
             )
-            # Lane distance interval
+            # 车道距离区间
             lane_psi = self.lane.heading_at(
                 self.lane.local_coordinates(self.position)[0]
             )
@@ -146,7 +146,7 @@ class IntervalVehicle(LinearVehicle):
             d_safe_i = self.DISTANCE_WANTED + self.TIME_WANTED * v_i
             phi_a_i[:, 2] = interval_negative_part(intervals_diff(d_i, d_safe_i))
 
-        # Steering features
+        # 转向特征
         phi_b_i = None
         lanes = self.get_followed_lanes()
         for lane_index in lanes:
@@ -161,18 +161,18 @@ class IntervalVehicle(LinearVehicle):
             phi_b_i_lane = np.transpose(
                 np.array([[0, 0], intervals_product(lateral_i, i_v_i)])
             )
-            # Union of candidate feature intervals
+            # 合并候选特征区间
             if phi_b_i is None:
                 phi_b_i = phi_b_i_lane
             else:
                 phi_b_i[0] = np.minimum(phi_b_i[0], phi_b_i_lane[0])
                 phi_b_i[1] = np.maximum(phi_b_i[1], phi_b_i_lane[1])
 
-        # Commands interval
+        # 控制指令区间
         a_i = intervals_product(self.theta_a_i, phi_a_i)
         b_i = intervals_product(self.theta_b_i, phi_b_i)
 
-        # Speeds interval
+        # 速度区间
         keep_stability = False
         if keep_stability:
             dv_i = integrator_interval(v_i - self.target_speed, self.theta_a_i[:, 0])
@@ -192,7 +192,7 @@ class IntervalVehicle(LinearVehicle):
             )
         d_psi_i += b_i
 
-        # Position interval
+        # 位置区间
         cos_i = [
             -1 if psi_i[0] <= np.pi <= psi_i[1] else min(map(np.cos, psi_i)),
             1 if psi_i[0] <= 0 <= psi_i[1] else max(map(np.cos, psi_i)),
@@ -204,13 +204,13 @@ class IntervalVehicle(LinearVehicle):
         dx_i = intervals_product(v_i, cos_i)
         dy_i = intervals_product(v_i, sin_i)
 
-        # Interval dynamics integration
+        # 对区间动力学进行积分
         self.interval.speed += dv_i * dt
         self.interval.heading += d_psi_i * dt
         self.interval.position[:, 0] += dx_i * dt
         self.interval.position[:, 1] += dy_i * dt
 
-        # Add noise
+        # 加入噪声
         noise = 0.3
         self.interval.position[:, 0] += noise * dt * np.array([-1, 1])
         self.interval.position[:, 1] += noise * dt * np.array([-1, 1])
@@ -218,16 +218,16 @@ class IntervalVehicle(LinearVehicle):
 
     def predictor_step(self, dt: float) -> None:
         """
-        Step the interval predictor dynamics
+        推进一步区间预测器的动力学。
 
-        :param dt: timestep [s]
+        :param dt: 时间步长，单位为秒
         """
-        # Create longitudinal and lateral LPVs
+        # 创建纵向和横向 LPV 模型
         self.predictor_init()
         self.lateral_lpv: LPV
         self.longitudinal_lpv: LPV
 
-        # Detect lane change and update intervals of local coordinates with the new frame
+        # 检测变道，并在新坐标系中更新局部坐标区间
         if self.target_lane_index != self.previous_target_lane_index:
             position_i = self.interval.position
             target_lane = self.road.network.get_lane(self.target_lane_index)
@@ -258,11 +258,11 @@ class IntervalVehicle(LinearVehicle):
             ) - self.longitudinal_lpv.x_i_t.mean(axis=0)
             self.previous_target_lane_index = self.target_lane_index
 
-        # Step
+        # 推进一步
         self.longitudinal_lpv.step(dt)
         self.lateral_lpv.step(dt)
 
-        # Backward coordinates change
+        # 反向坐标变换
         x_i_long = self.longitudinal_lpv.change_coordinates(
             self.longitudinal_lpv.x_i_t, back=True, interval=True
         )
@@ -270,7 +270,7 @@ class IntervalVehicle(LinearVehicle):
             self.lateral_lpv.x_i_t, back=True, interval=True
         )
 
-        # Conversion from rectified to true coordinates
+        # 从校正坐标转换回真实坐标
         target_lane = self.road.network.get_lane(self.target_lane_index)
         position_i = interval_local_to_absolute(
             x_i_long[:, 0], x_i_lat[:, 0], target_lane
@@ -280,18 +280,18 @@ class IntervalVehicle(LinearVehicle):
         self.interval.heading = x_i_lat[:, 1]
 
     def predictor_init(self) -> None:
-        """Initialize the LPV models used for interval prediction."""
+        """初始化区间预测使用的 LPV 模型。"""
         position_i = self.interval.position
         target_lane = self.road.network.get_lane(self.target_lane_index)
         longi_i, lat_i = interval_absolute_to_local(position_i, target_lane)
         v_i = self.interval.speed
         psi_i = self.interval.heading - self.lane.heading_at(longi_i.mean())
 
-        # Longitudinal predictor
+        # 纵向预测器
         if not self.longitudinal_lpv:
             front_interval = self.get_front_interval()
 
-            # LPV specification
+            # LPV 模型定义
             if front_interval:
                 f_longi_i, _ = interval_absolute_to_local(
                     front_interval.position, target_lane
@@ -315,9 +315,9 @@ class IntervalVehicle(LinearVehicle):
             a0, da = self.longitudinal_matrix_polytope()
             self.longitudinal_lpv = LPV(x0, a0, da, b, d, omega_i, u, center=center)
 
-            # Lateral predictor
+            # 横向预测器
             if not self.lateral_lpv:
-                # LPV specification
+                # LPV 模型定义
                 x0 = [lat_i[0], psi_i[0]]
                 center = [0, 0]
                 noise = 0.5
@@ -347,16 +347,16 @@ class IntervalVehicle(LinearVehicle):
         return polytope(a_theta, parameter_box)
 
     def get_front_interval(self) -> VehicleInterval | None:
-        # TODO: For now, we assume the front vehicle follows the models' front vehicle
+        # TODO：目前假设前车跟随模型中的前车。
         front_vehicle, _ = self.road.neighbour_vehicles(self)
         if front_vehicle:
             if isinstance(front_vehicle, IntervalVehicle):
-                # Use interval from the observer estimate of the front vehicle
+                # 使用前车观测器估计得到的区间
                 front_interval = front_vehicle.interval
             else:
-                # The front vehicle trajectory interval is not being estimated, so it
-                # should be considered as certain. We use a new observer created from
-                # that current vehicle state, which will have full certainty.
+                # 这里没有估计前车轨迹区间，因此
+                # 将它视为确定状态。根据前车的当前状态
+                # 创建新的观测器，其初始状态完全确定。
                 front_interval = IntervalVehicle.create_from(front_vehicle).interval
         else:
             front_interval = None
@@ -366,15 +366,14 @@ class IntervalVehicle(LinearVehicle):
         self, lane_change_model: str = "model", squeeze: bool = True
     ) -> list[LaneIndex]:
         """
-        Get the list of lanes that could be followed by this vehicle.
+        获取该车辆可能跟随的车道列表。
 
         :param lane_change_model:
-          - model: assume that the vehicle will follow the lane of its model behaviour.
-          - all: assume that any lane change decision is possible at any timestep
-          - right: assume that a right lane change decision is possible at any timestep
-
-        :param squeeze: if True, remove duplicate lanes (at boundaries of the road)
-        :return: the list of followed lane indexes
+            - model：假设车辆跟随其行为模型选择的车道。
+            - all：假设任意时刻都可能作出任意变道决策。
+            - right：假设任意时刻都可能决定向右变道。
+        :param squeeze: 若为 True，则移除道路边界处出现的重复车道
+        :return: 可能跟随的车道索引列表
         """
         self.target_lane_index: LaneIndex
         lanes = []
@@ -396,21 +395,21 @@ class IntervalVehicle(LinearVehicle):
             ):
                 lanes.append((_from, _to, _id + 1))
             elif not squeeze:
-                lanes.append(self.target_lane_index)  # Right lane is also current lane
+                lanes.append(self.target_lane_index)  # 右侧车道同时也是当前车道
         return lanes
 
     def partial_observer_step(self, dt: float, alpha: float = 0) -> None:
         """
-        Step the boundary parts of the current state interval
+        推进当前状态区间的边界部分。
 
-        1. Split x_i(t) into two upper and lower intervals x_i_-(t) and x_i_+(t)
-        2. Propagate their observer dynamics x_i_-(t+dt) and x_i_+(t+dt)
-        3. Merge the resulting intervals together to x_i(t+dt).
+        1. 将 x_i(t) 拆分为下边界区间 x_i_-(t) 和上边界区间 x_i_+(t)。
+        2. 推进各自的观测器动力学，得到 x_i_-(t+dt) 和 x_i_+(t+dt)。
+        3. 将结果合并为 x_i(t+dt)。
 
-        :param dt: timestep [s]
-        :param alpha: ratio of the full interval that defines the boundaries
+        :param dt: 时间步长，单位为秒
+        :param alpha: 边界区间占完整区间的比例
         """
-        # 1. Split x_i(t) into two upper and lower intervals x_i_-(t) and x_i_+(t)
+        # 1. 将 x_i(t) 拆分为下边界区间 x_i_-(t) 和上边界区间 x_i_+(t)
         o = self.interval
         v_minus = IntervalVehicle.create_from(self)
         v_minus.interval = copy.deepcopy(self.interval)
@@ -426,7 +425,7 @@ class IntervalVehicle(LinearVehicle):
         )
         v_plus.interval.speed[0] = alpha * o.speed[0] + (1 - alpha) * o.speed[1]
         v_plus.interval.heading[0] = alpha * o.heading[0] + (1 - alpha) * o.heading[1]
-        # 2. Propagate their observer dynamics x_i_-(t+dt) and x_i_+(t+dt)
+        # 2. 推进各自的观测器动力学，得到 x_i_-(t+dt) 和 x_i_+(t+dt)
         v_minus.road = copy.copy(v_minus.road)
         v_minus.road.vehicles = [
             v if v is not self else v_minus for v in v_minus.road.vehicles
@@ -437,7 +436,7 @@ class IntervalVehicle(LinearVehicle):
         ]
         v_minus.observer_step(dt)
         v_plus.observer_step(dt)
-        # 3. Merge the resulting intervals together to x_i(t+dt).
+        # 3. 将结果合并为 x_i(t+dt)
         self.interval.position = np.array(
             [v_minus.interval.position[0], v_plus.interval.position[1]]
         )
@@ -452,19 +451,19 @@ class IntervalVehicle(LinearVehicle):
         )
 
     def store_trajectories(self) -> None:
-        """Store the current model, min and max states to a trajectory list."""
+        """将当前模型状态、状态下界和上界存入轨迹列表。"""
         self.trajectory.append(LinearVehicle.create_from(self))
         self.interval_trajectory.append(copy.deepcopy(self.interval))
 
     def handle_collisions(self, other: RoadObject, dt: float = 0) -> None:
         """
-        Worst-case collision check.
+        检查最坏情况下的碰撞。
 
-        For robust planning, we assume that MDPVehicles collide with the uncertainty
-        set of an IntervalVehicle, which corresponds to worst-case outcome.
+        为进行鲁棒规划，假设 MDPVehicle 与 IntervalVehicle 的不确定状态集合
+        发生碰撞时就算碰撞，这对应最坏情况。
 
-        :param other: the other vehicle
-        :param dt: a timestep
+        :param other: 另一辆车
+        :param dt: 时间步长
         """
         if not isinstance(other, MDPVehicle):
             super().handle_collisions(other)
@@ -473,7 +472,7 @@ class IntervalVehicle(LinearVehicle):
         if not self.collidable or self.crashed or other is self:
             return
 
-        # Fast rectangular pre-check
+        # 快速矩形预检查
         if not utils.point_in_rectangle(
             other.position,
             self.interval.position[0] - self.LENGTH,
@@ -481,13 +480,13 @@ class IntervalVehicle(LinearVehicle):
         ):
             return
 
-        # Projection of other vehicle to uncertainty rectangle. This is the possible
-        # position of this vehicle which is the most likely to collide with others
+        # 将另一辆车投影到不确定性矩形上，得到本车所有可能位置中
+        # 最容易与对方发生碰撞的位置
         projection = np.minimum(
             np.maximum(other.position, self.interval.position[0]),
             self.interval.position[1],
         )
-        # Accurate rectangular check
+        # 精确矩形检查
         if utils.rotated_rectangles_intersect(
             (projection, self.LENGTH, self.WIDTH, self.heading),
             (other.position, 0.9 * other.LENGTH, 0.9 * other.WIDTH, other.heading),

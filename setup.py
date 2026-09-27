@@ -1,6 +1,6 @@
-# Following PEP 517/518, this file should not not needed and replaced instead by the setup.cfg file and pyproject.toml.
-# Unfortunately it is still required py the pip editable mode `pip install -e`
-# See https://stackoverflow.com/a/60885212
+# 根据 PEP 517/518，本文件原则上可由 setup.cfg 和 pyproject.toml 替代。
+# 原实现说明：当时 pip 的可编辑安装模式 `pip install -e` 仍需要本文件。
+# 参考 https://stackoverflow.com/a/60885212
 
 import pathlib
 
@@ -11,7 +11,7 @@ CWD = pathlib.Path(__file__).absolute().parent
 
 
 def get_version():
-    """Gets the highway-env version."""
+    """获取 highway-env 的版本号。"""
     path = CWD / "highway_env" / "__init__.py"
     content = path.read_text()
 

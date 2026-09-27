@@ -25,9 +25,9 @@ Observation = TypeVar("Observation")
 
 class ConnectedLaneNeighboursMixin:
     """
-    A mixin class introduced in v1.12 to enable new behaviour for neighbour vehicles detection.
+    在 v1.12 中引入的混入类，用于启用新的邻近车辆检测行为。
 
-    See https://github.com/Farama-Foundation/HighwayEnv/pull/667
+    参见 https://github.com/Farama-Foundation/HighwayEnv/pull/667
     """
 
     @classmethod
@@ -39,11 +39,10 @@ class ConnectedLaneNeighboursMixin:
 
 class AbstractEnv(gym.Env):
     """
-    A generic environment for various tasks involving a vehicle driving on a road.
+    供多种道路驾驶任务使用的通用环境。
 
-    The environment contains a road populated with vehicles, and a controlled ego-vehicle that can change lane and
-    speed. The action space is fixed, but the observation space and reward function must be defined in the
-    environment implementations.
+    环境包含道路、其他车辆，以及能够变道和改变速度的受控自车。
+    动作空间固定；观察空间和奖励函数需要由具体环境实现定义。
     """
 
     observation_type: ObservationType
@@ -54,68 +53,68 @@ class AbstractEnv(gym.Env):
     }
 
     PERCEPTION_DISTANCE = 5.0 * Vehicle.MAX_SPEED
-    """The maximum distance of any vehicle present in the observation [m]"""
+    """观察中车辆与自车之间允许的最大距离，单位为米。"""
 
     def __init__(
         self, config: dict | None = None, render_mode: str | None = None
     ) -> None:
         super().__init__()
 
-        # Rendering
+        # 画面渲染
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         self.viewer = None
         self._record_video_wrapper = None
         self.enable_auto_render = False
 
-        # Configuration
+        # 环境配置
         self.config = self.default_config()
         self.configure(config)
 
-        # Scene
+        # 场景
         self.road = None
         self.controlled_vehicles = []
 
-        # Spaces
+        # 观察空间与动作空间
         self.action_type = None
         self.action_space = None
         self.observation_type = None
         self.observation_space = None
         self.define_spaces()
 
-        # Running
-        self.time = 0  # Simulation time
-        self.steps = 0  # Actions performed
+        # 运行状态
+        self.time = 0  # 仿真时间
+        self.steps = 0  # 已执行的动作数
         self.done = False
 
         self.reset()
 
     @property
     def vehicle(self) -> Vehicle:
-        """First (default) controlled vehicle."""
+        """第一辆受控车辆，也是默认受控车辆。"""
         return self.controlled_vehicles[0] if self.controlled_vehicles else None
 
     @vehicle.setter
     def vehicle(self, vehicle: Vehicle) -> None:
-        """Set a unique controlled vehicle."""
+        """设置唯一的受控车辆。"""
         self.controlled_vehicles = [vehicle]
 
     @classmethod
     def default_config(cls) -> dict:
         """
-        Default environment configuration.
+        环境的默认配置。
 
-        Can be overloaded in environment implementations, or by calling configure().
-        :return: a configuration dict
+        具体环境可以重写此配置，也可以调用 configure() 进行修改。
+        :return: 配置字典
         """
         return {
             "observation": {"type": "Kinematics"},
             "action": {"type": "DiscreteMetaAction"},
-            "simulation_frequency": 15,  # [Hz]
-            "policy_frequency": 1,  # [Hz]
+            "simulation_frequency": 15,  # 频率，单位为 Hz（赫兹）
+            "policy_frequency": 1,  # 频率，单位为 Hz（赫兹）
             "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
-            "screen_width": 600,  # [px]
-            "screen_height": 150,  # [px]
+            "screen_width": 600,  # 单位：像素
+            "screen_height": 150,  # 单位：像素
             "centering_position": [0.3, 0.5],
             "scaling": 5.5,
             "show_trajectories": False,
@@ -155,7 +154,7 @@ class AbstractEnv(gym.Env):
 
     def define_spaces(self) -> None:
         """
-        Set the types and spaces of observation and action from config.
+        根据配置设置观察和动作的类型及空间。
         """
         self.observation_type = observation_factory(self, self.config["observation"])
         self.action_type = action_factory(self, self.config["action"])
@@ -164,48 +163,48 @@ class AbstractEnv(gym.Env):
 
     def _reward(self, action: Action) -> float:
         """
-        Return the reward associated with performing a given action and ending up in the current state.
+        返回执行指定动作并到达当前状态后获得的奖励。
 
-        :param action: the last action performed
-        :return: the reward
+        :param action: 上一次执行的动作
+        :return: 奖励
         """
         raise NotImplementedError
 
     def _rewards(self, action: Action) -> dict[str, float]:
         """
-        Returns a multi-objective vector of rewards.
+        返回包含多个目标的奖励向量。
 
-        If implemented, this reward vector should be aggregated into a scalar in _reward().
-        This vector value should only be returned inside the info dict.
+        若实现此方法，应在 _reward() 中把各项奖励汇总为一个标量。
+        这个向量本身只应放在 info 字典中返回。
 
-        :param action: the last action performed
-        :return: a dict of {'reward_name': reward_value}
+        :param action: 上一次执行的动作
+        :return: 格式为 {'reward_name': reward_value} 的字典
         """
         raise NotImplementedError
 
     def _is_terminated(self) -> bool:
         """
-        Check whether the current state is a terminal state
+        检查当前状态是否为终止状态。
 
-        :return:is the state terminal
+        :return: 当前状态是否终止
         """
         raise NotImplementedError
 
     def _is_truncated(self) -> bool:
         """
-        Check we truncate the episode at the current step
+        检查是否应在当前步截断本回合。
 
-        :return: is the episode truncated
+        :return: 本回合是否被截断
         """
         raise NotImplementedError
 
     def _info(self, obs: Observation, action: Action | None = None) -> dict:
         """
-        Return a dictionary of additional information
+        返回包含附加信息的字典。
 
-        :param obs: current observation
-        :param action: current action
-        :return: info dict
+        :param obs: 当前观察
+        :param action: 当前动作
+        :return: 附加信息字典
         """
         info = {
             "speed": self.vehicle.speed,
@@ -225,17 +224,17 @@ class AbstractEnv(gym.Env):
         options: dict | None = None,
     ) -> tuple[Observation, dict]:
         """
-        Reset the environment to it's initial configuration
+        将环境重置到初始配置。
 
-        :param seed: The seed that is used to initialize the environment's PRNG
-        :param options: Allows the environment configuration to specified through `options["config"]`
-        :return: the observation of the reset state
+        :param seed: 用于初始化环境伪随机数生成器的种子
+        :param options: 可通过 `options["config"]` 指定环境配置
+        :return: 重置后状态的观察
         """
         super().reset(seed=seed, options=options)
         if options and "config" in options:
             self.configure(options["config"])
         self.update_metadata()
-        self.define_spaces()  # First, to set the controlled vehicle class depending on action space
+        self.define_spaces()  # 第一次设置：根据动作空间确定受控车辆的类。
         self.time = self.steps = 0
         self.done = False
         self._reset()
@@ -243,7 +242,7 @@ class AbstractEnv(gym.Env):
             self.road.neighbour_vehicles_connected_lanes = self.config[
                 "neighbour_vehicles_connected_lanes"
             ]
-        self.define_spaces()  # Second, to link the obs and actions to the vehicles once the scene is created
+        self.define_spaces()  # 第二次设置：场景创建后，将观察和动作关联到车辆。
         obs = self.observation_type.observe()
         info = self._info(obs, action=self.action_space.sample())
         if self.render_mode == "human":
@@ -252,21 +251,21 @@ class AbstractEnv(gym.Env):
 
     def _reset(self) -> None:
         """
-        Reset the scene: roads and vehicles.
+        重置场景中的道路和车辆。
 
-        This method must be overloaded by the environments.
+        具体环境必须重写此方法。
         """
         raise NotImplementedError()
 
     def step(self, action: Action) -> tuple[Observation, float, bool, bool, dict]:
         """
-        Perform an action and step the environment dynamics.
+        执行一个动作，并推进环境的仿真过程。
 
-        The action is executed by the ego-vehicle, and all other vehicles on the road performs their default behaviour
-        for several simulation timesteps until the next decision making step.
+        自车执行该动作，道路上的其他车辆按各自默认行为运行；
+        经过若干仿真步后，到达下一次决策时刻。
 
-        :param action: the action performed by the ego-vehicle
-        :return: a tuple (observation, reward, terminated, truncated, info)
+        :param action: 自车执行的动作
+        :return: 元组 (observation, reward, terminated, truncated, info)
         """
         if self.road is None or self.vehicle is None:
             raise NotImplementedError(
@@ -287,12 +286,12 @@ class AbstractEnv(gym.Env):
         return obs, reward, terminated, truncated, info
 
     def _simulate(self, action: Action | None = None) -> None:
-        """Perform several steps of simulation with constant action."""
+        """在动作保持不变的情况下执行若干仿真步。"""
         frames = int(
             self.config["simulation_frequency"] // self.config["policy_frequency"]
         )
         for frame in range(frames):
-            # Forward action to the vehicle
+            # 将动作转交给车辆。
             if (
                 action is not None
                 and not self.config["manual_control"]
@@ -309,20 +308,20 @@ class AbstractEnv(gym.Env):
             self.road.step(1 / self.config["simulation_frequency"])
             self.steps += 1
 
-            # Automatically render intermediate simulation steps if a viewer has been launched
-            # Ignored if the rendering is done offscreen
+            # 若已启动查看器，自动渲染中间的仿真帧。
+            # 采用离屏渲染时忽略此步骤。
             if (
                 frame < frames - 1
-            ):  # Last frame will be rendered through env.render() as usual
+            ):  # 最后一帧仍按通常方式由 env.render() 渲染。
                 self._automatic_rendering()
 
         self.enable_auto_render = False
 
     def render(self) -> np.ndarray | None:
         """
-        Render the environment.
+        渲染环境。
 
-        Create a viewer if none exists, and use it to render an image.
+        如果尚无查看器，则先创建查看器，再用它绘制图像。
         """
         if self.render_mode is None:
             assert self.spec is not None
@@ -347,9 +346,9 @@ class AbstractEnv(gym.Env):
 
     def close(self) -> None:
         """
-        Close the environment.
+        关闭环境。
 
-        Will close the environment viewer if it exists.
+        若环境查看器存在，也会将其关闭。
         """
         self.done = True
         if self.viewer is not None:
@@ -366,10 +365,10 @@ class AbstractEnv(gym.Env):
 
     def _automatic_rendering(self) -> None:
         """
-        Automatically render the intermediate frames while an action is still ongoing.
+        在一个动作尚未结束时，自动渲染其中的中间帧。
 
-        This allows to render the whole video and not only single steps corresponding to agent decision-making.
-        If a RecordVideo wrapper has been set, use it to capture intermediate frames.
+        这样可以渲染完整视频，而不只显示智能体作出决策时的离散画面。
+        若设置了 RecordVideo 包装器，则用它采集中间帧。
         """
         if self.viewer is not None and self.enable_auto_render:
             if self._record_video_wrapper:
@@ -379,11 +378,11 @@ class AbstractEnv(gym.Env):
 
     def simplify(self) -> AbstractEnv:
         """
-        Return a simplified copy of the environment where distant vehicles have been removed from the road.
+        返回环境的简化副本，从道路上移除距离较远的车辆。
 
-        This is meant to lower the policy computational load while preserving the optimal actions set.
+        这样可以降低策略计算量，同时保留最优动作集合。
 
-        :return: a simplified environment state
+        :return: 简化后的环境状态
         """
         state_copy = copy.deepcopy(self)
         state_copy.road.vehicles = [
@@ -396,11 +395,11 @@ class AbstractEnv(gym.Env):
 
     def change_vehicles(self, vehicle_class_path: str) -> AbstractEnv:
         """
-        Change the type of all vehicles on the road
+        更改道路上其他车辆的类型。
 
-        :param vehicle_class_path: The path of the class of behavior for other vehicles
-                             Example: "highway_env.vehicle.behavior.IDMVehicle"
-        :return: a new environment with modified behavior model for other vehicles
+        :param vehicle_class_path: 其他车辆行为类的导入路径，
+            例如 "highway_env.vehicle.behavior.IDMVehicle"
+        :return: 已修改其他车辆行为模型的新环境
         """
         vehicle_class = utils.class_from_path(vehicle_class_path)
 
@@ -417,7 +416,7 @@ class AbstractEnv(gym.Env):
             for v in env_copy.road.vehicles:
                 if isinstance(v, IDMVehicle):
                     v.route = [(lane[0], lane[1], preferred_lane) for lane in v.route]
-                    # Vehicle with lane preference are also less cautious
+                    # 具有车道偏好的车辆也会更不谨慎。
                     v.LANE_CHANGE_MAX_BRAKING_IMPOSED = 1000
         return env_copy
 
@@ -455,7 +454,7 @@ class AbstractEnv(gym.Env):
         return finite_mdp(self, time_quantization=1 / self.config["policy_frequency"])
 
     def __deepcopy__(self, memo):
-        """Perform a deep copy but without copying the environment viewer."""
+        """进行深拷贝，但不复制环境查看器。"""
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result

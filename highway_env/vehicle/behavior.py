@@ -11,36 +11,36 @@ from highway_env.vehicle.kinematics import Vehicle
 
 class IDMVehicle(ControlledVehicle):
     """
-    A vehicle using both a longitudinal and a lateral decision policies.
+    同时使用纵向和横向决策策略的车辆。
 
-    - Longitudinal: the IDM model computes an acceleration given the preceding vehicle's distance and speed.
-    - Lateral: the MOBIL model decides when to change lane by maximizing the acceleration of nearby vehicles.
+    - 纵向：IDM 模型根据前车距离和速度计算加速度。
+    - 横向：MOBIL 模型通过提高附近车辆的加速度收益，决定何时变道。
     """
 
-    # Longitudinal policy parameters
+    # 纵向策略参数
     ACC_MAX = 6.0  # [m/s2]
-    """Maximum acceleration."""
+    """最大加速度。"""
 
     COMFORT_ACC_MAX = 3.0  # [m/s2]
-    """Desired maximum acceleration."""
+    """期望的最大加速度。"""
 
     COMFORT_ACC_MIN = -5.0  # [m/s2]
-    """Desired maximum deceleration."""
+    """期望的最大减速度。"""
 
     DISTANCE_WANTED = 5.0 + ControlledVehicle.LENGTH  # [m]
-    """Desired jam distance to the front vehicle."""
+    """拥堵时与前车保持的期望距离。"""
 
     TIME_WANTED = 1.5  # [s]
-    """Desired time gap to the front vehicle."""
+    """与前车保持的期望时间间隔。"""
 
     DELTA = 4.0  # []
-    """Exponent of the velocity term."""
+    """速度项的指数。"""
 
     DELTA_RANGE = [3.5, 4.5]
-    """Range of delta when chosen randomly."""
+    """随机选择 delta 时的取值范围。"""
 
-    # Lateral policy parameters
-    POLITENESS = 0.0  # in [0, 1]
+    # 横向策略参数
+    POLITENESS = 0.0  # 取值范围为 [0, 1]
     LANE_CHANGE_MIN_ACC_GAIN = 0.2  # [m/s2]
     LANE_CHANGE_MAX_BRAKING_IMPOSED = 2.0  # [m/s2]
     LANE_CHANGE_DELAY = 1.0  # [s]
@@ -71,12 +71,12 @@ class IDMVehicle(ControlledVehicle):
     @classmethod
     def create_from(cls, vehicle: ControlledVehicle) -> IDMVehicle:
         """
-        Create a new vehicle from an existing one.
+        根据已有车辆创建新车辆。
 
-        The vehicle dynamics and target dynamics are copied, other properties are default.
+        复制车辆的运动状态和目标运动状态，其他属性使用默认值。
 
-        :param vehicle: a vehicle
-        :return: a new vehicle at the same dynamical state
+        :param vehicle: 已有车辆
+        :return: 具有相同运动状态的新车辆
         """
         v = cls(
             vehicle.road,
@@ -92,17 +92,17 @@ class IDMVehicle(ControlledVehicle):
 
     def act(self, action: dict | str = None):
         """
-        Execute an action.
+        执行动作。
 
-        For now, no action is supported because the vehicle takes all decisions
-        of acceleration and lane changes on its own, based on the IDM and MOBIL models.
+        目前不接受外部动作，因为车辆根据 IDM 和 MOBIL 模型，
+        自主决定加速度和变道。
 
-        :param action: the action
+        :param action: 动作
         """
         if self.crashed:
             return
         action = {}
-        # Lateral: MOBIL
+        # 横向：MOBIL 模型
         self.follow_road()
         if self.enable_lane_change:
             self.change_lane_policy()
@@ -111,14 +111,14 @@ class IDMVehicle(ControlledVehicle):
             action["steering"], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE
         )
 
-        # Longitudinal: IDM
+        # 纵向：IDM 模型
         front_vehicle, rear_vehicle = self.road.neighbour_vehicles(
             self, self.lane_index
         )
         action["acceleration"] = self.acceleration(
             ego_vehicle=self, front_vehicle=front_vehicle, rear_vehicle=rear_vehicle
         )
-        # When changing lane, check both current and target lanes
+        # 变道期间，同时检查当前车道和目标车道
         if self.lane_index != self.target_lane_index:
             front_vehicle, rear_vehicle = self.road.neighbour_vehicles(
                 self, self.target_lane_index
@@ -133,16 +133,16 @@ class IDMVehicle(ControlledVehicle):
         action["acceleration"] = np.clip(
             action["acceleration"], -self.ACC_MAX, self.ACC_MAX
         )
-        # Skip ControlledVehicle.act(), or the command will be overridden.
+        # 跳过 ControlledVehicle.act()，否则这里的控制指令会被覆盖。
         Vehicle.act(self, action)
 
     def step(self, dt: float):
         """
-        Step the simulation.
+        推进一步仿真。
 
-        Increases a timer used for decision policies, and step the vehicle dynamics.
+        增加决策策略使用的计时器，并推进车辆运动。
 
-        :param dt: timestep
+        :param dt: 时间步长
         """
         self.timer += dt
         super().step(dt)
@@ -154,18 +154,17 @@ class IDMVehicle(ControlledVehicle):
         rear_vehicle: Vehicle = None,
     ) -> float:
         """
-        Compute an acceleration command with the Intelligent Driver Model.
+        使用智能驾驶员模型（IDM）计算加速度指令。
 
-        The acceleration is chosen so as to:
-        - reach a target speed;
-        - maintain a minimum safety distance (and safety time) w.r.t the front vehicle.
+        选择加速度时考虑：
+        - 达到目标速度；
+        - 与前车保持最小安全距离和安全时间间隔。
 
-        :param ego_vehicle: the vehicle whose desired acceleration is to be computed. It does not have to be an
-                            IDM vehicle, which is why this method is a class method. This allows an IDM vehicle to
-                            reason about other vehicles behaviors even though they may not IDMs.
-        :param front_vehicle: the vehicle preceding the ego-vehicle
-        :param rear_vehicle: the vehicle following the ego-vehicle
-        :return: the acceleration command for the ego-vehicle [m/s2]
+        :param ego_vehicle: 要计算期望加速度的车辆，不必是 IDM 车辆。
+            因此该方法使用类方法，使 IDM 车辆也能推测非 IDM 车辆的行为。
+        :param front_vehicle: 自车前方的车辆
+        :param rear_vehicle: 自车后方的车辆
+        :return: 自车的加速度指令，单位为米/秒²
         """
         if not ego_vehicle or not isinstance(ego_vehicle, Vehicle):
             return 0
@@ -196,12 +195,12 @@ class IDMVehicle(ControlledVehicle):
         projected: bool = True,
     ) -> float:
         """
-        Compute the desired distance between a vehicle and its leading vehicle.
+        计算车辆与前车之间的期望距离。
 
-        :param ego_vehicle: the vehicle being controlled
-        :param front_vehicle: its leading vehicle
-        :param projected: project 2D velocities in 1D space
-        :return: the desired distance between the two [m]
+        :param ego_vehicle: 被控制的车辆
+        :param front_vehicle: 它的前车
+        :param projected: 是否将二维速度投影到一维方向
+        :return: 两车之间的期望距离，单位为米
         """
         d0 = self.DISTANCE_WANTED
         tau = self.TIME_WANTED
@@ -218,16 +217,16 @@ class IDMVehicle(ControlledVehicle):
 
     def change_lane_policy(self) -> None:
         """
-        Decide when to change lane.
+        决定何时变道。
 
-        Based on:
-        - frequency;
-        - closeness of the target lane;
-        - MOBIL model.
+        依据包括：
+        - 决策频率；
+        - 目标车道是否足够接近；
+        - MOBIL 模型。
         """
-        # If a lane change is already ongoing
+        # 如果已经正在变道
         if self.lane_index != self.target_lane_index:
-            # If we are on correct route but bad lane: abort it if someone else is already changing into the same lane
+            # 如果道路路线正确但车道不合适，且其他车辆也正驶入同一车道，则取消变道
             if self.lane_index[:2] == self.target_lane_index[:2]:
                 for v in self.road.vehicles:
                     if (
@@ -243,37 +242,37 @@ class IDMVehicle(ControlledVehicle):
                             break
             return
 
-        # else, at a given frequency,
+        # 否则，按照指定频率
         if not utils.do_every(self.LANE_CHANGE_DELAY, self.timer):
             return
         self.timer = 0
 
-        # decide to make a lane change
+        # 判断是否开始变道
         for lane_index in self.road.network.side_lanes(self.lane_index):
-            # Is the candidate lane close enough?
+            # 候选车道是否足够接近？
             if not self.road.network.get_lane(lane_index).is_reachable_from(
                 self.position
             ):
                 continue
-            # Only change lane when the vehicle is moving
+            # 仅在车辆运动时变道
             if np.abs(self.speed) < 1:
                 continue
-            # Does the MOBIL model recommend a lane change?
+            # MOBIL 模型是否建议变道？
             if self.mobil(lane_index):
                 self.target_lane_index = lane_index
 
     def mobil(self, lane_index: LaneIndex) -> bool:
         """
-        MOBIL lane change model: Minimizing Overall Braking Induced by a Lane change
+        MOBIL 变道模型：尽量减少变道引起的整体制动。
 
-            The vehicle should change lane only if:
-            - after changing it (and/or following vehicles) can accelerate more;
-            - it doesn't impose an unsafe braking on its new following vehicle.
+        只有满足以下条件才应变道：
+        - 变道后，自车和/或后车能够获得更大的加速度；
+        - 不会迫使新车道上的后车进行不安全的制动。
 
-        :param lane_index: the candidate lane for the change
-        :return: whether the lane change should be performed
+        :param lane_index: 候选目标车道
+        :return: 是否应执行变道
         """
-        # Is the maneuver unsafe for the new following vehicle?
+        # 这次变道对新车道上的后车是否不安全？
         new_preceding, new_following = self.road.neighbour_vehicles(self, lane_index)
         new_following_a = self.acceleration(
             ego_vehicle=new_following, front_vehicle=new_preceding
@@ -284,20 +283,20 @@ class IDMVehicle(ControlledVehicle):
         if new_following_pred_a < -self.LANE_CHANGE_MAX_BRAKING_IMPOSED:
             return False
 
-        # Do I have a planned route for a specific lane which is safe for me to access?
+        # 规划路线是否指定了某条可以安全驶入的车道？
         old_preceding, old_following = self.road.neighbour_vehicles(self)
         self_pred_a = self.acceleration(ego_vehicle=self, front_vehicle=new_preceding)
         if self.route and self.route[0][2] is not None:
-            # Wrong direction
+            # 方向不正确
             if np.sign(lane_index[2] - self.target_lane_index[2]) != np.sign(
                 self.route[0][2] - self.target_lane_index[2]
             ):
                 return False
-            # Unsafe braking required
+            # 需要进行不安全的制动
             elif self_pred_a < -self.LANE_CHANGE_MAX_BRAKING_IMPOSED:
                 return False
 
-        # Is there an acceleration advantage for me and/or my followers to change lane?
+        # 变道是否能为自车和/或后车带来加速度收益？
         else:
             self_a = self.acceleration(ego_vehicle=self, front_vehicle=old_preceding)
             old_following_a = self.acceleration(
@@ -320,35 +319,35 @@ class IDMVehicle(ControlledVehicle):
             if jerk < self.LANE_CHANGE_MIN_ACC_GAIN:
                 return False
 
-        # All clear, let's go!
+        # 各项检查通过，可以变道。
         return True
 
     def recover_from_stop(self, acceleration: float) -> float:
         """
-        If stopped on the wrong lane, try a reversing maneuver.
+        如果停在错误车道上，尝试倒车脱困。
 
-        :param acceleration: desired acceleration from IDM
-        :return: suggested acceleration to recover from being stuck
+        :param acceleration: IDM 给出的期望加速度
+        :return: 为摆脱停滞状态建议的加速度
         """
         stopped_speed = 5
         safe_distance = 200
-        # Is the vehicle stopped on the wrong lane?
+        # 车辆是否停在错误车道上？
         if self.target_lane_index != self.lane_index and self.speed < stopped_speed:
             _, rear = self.road.neighbour_vehicles(self)
             _, new_rear = self.road.neighbour_vehicles(
                 self, self.road.network.get_lane(self.target_lane_index)
             )
-            # Check for free room behind on both lanes
+            # 检查两条车道的后方是否都有空余空间
             if (not rear or rear.lane_distance_to(self) > safe_distance) and (
                 not new_rear or new_rear.lane_distance_to(self) > safe_distance
             ):
-                # Reverse
+                # 倒车
                 return -self.COMFORT_ACC_MAX / 2
         return acceleration
 
 
 class LinearVehicle(IDMVehicle):
-    """A Vehicle whose longitudinal and lateral controllers are linear with respect to parameters."""
+    """纵向和横向控制器都对参数呈线性关系的车辆。"""
 
     ACCELERATION_PARAMETERS = [0.3, 0.3, 2.0]
     STEERING_PARAMETERS = [
@@ -421,19 +420,18 @@ class LinearVehicle(IDMVehicle):
         rear_vehicle: Vehicle = None,
     ) -> float:
         """
-        Compute an acceleration command with a Linear Model.
+        使用线性模型计算加速度指令。
 
-        The acceleration is chosen so as to:
-        - reach a target speed;
-        - reach the speed of the leading (resp following) vehicle, if it is lower (resp higher) than ego's;
-        - maintain a minimum safety distance w.r.t the leading vehicle.
+        选择加速度时考虑：
+        - 达到目标速度；
+        - 前车更慢时接近前车速度，后车更快时接近后车速度；
+        - 与前车保持最小安全距离。
 
-        :param ego_vehicle: the vehicle whose desired acceleration is to be computed. It does not have to be an
-                            Linear vehicle, which is why this method is a class method. This allows a Linear vehicle to
-                            reason about other vehicles behaviors even though they may not Linear.
-        :param front_vehicle: the vehicle preceding the ego-vehicle
-        :param rear_vehicle: the vehicle following the ego-vehicle
-        :return: the acceleration command for the ego-vehicle [m/s2]
+        :param ego_vehicle: 要计算期望加速度的车辆，不必是 LinearVehicle。
+            因此该方法使用类方法，使线性模型车辆也能推测其他类型车辆的行为。
+        :param front_vehicle: 自车前方的车辆
+        :param rear_vehicle: 自车后方的车辆
+        :return: 自车的加速度指令，单位为米/秒²
         """
         return float(
             np.dot(
@@ -466,12 +464,12 @@ class LinearVehicle(IDMVehicle):
 
     def steering_control(self, target_lane_index: LaneIndex) -> float:
         """
-        Linear controller with respect to parameters.
+        对参数呈线性关系的控制器。
 
-        Overrides the non-linear controller ControlledVehicle.steering_control()
+        覆盖非线性控制器 ControlledVehicle.steering_control()。
 
-        :param target_lane_index: index of the lane to follow
-        :return: a steering wheel angle command [rad]
+        :param target_lane_index: 要跟随的车道索引
+        :return: 转向角指令，单位为弧度
         """
         return float(
             np.dot(
@@ -482,10 +480,10 @@ class LinearVehicle(IDMVehicle):
 
     def steering_features(self, target_lane_index: LaneIndex) -> np.ndarray:
         """
-        A collection of features used to follow a lane
+        用于沿车道行驶的一组特征。
 
-        :param target_lane_index: index of the lane to follow
-        :return: a array of features
+        :param target_lane_index: 要跟随的车道索引
+        :return: 特征数组
         """
         lane = self.road.network.get_lane(target_lane_index)
         lane_coords = lane.local_coordinates(self.position)
@@ -502,22 +500,22 @@ class LinearVehicle(IDMVehicle):
         return features
 
     def longitudinal_structure(self):
-        # Nominal dynamics: integrate speed
+        # 标称动力学：对速度积分
         A = np.array([[0, 0, 1, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]])
-        # Target speed dynamics
+        # 目标速度动力学
         phi0 = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
-        # Front speed control
+        # 前车速度控制
         phi1 = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, -1, 1], [0, 0, 0, 0]])
-        # Front position control
+        # 前车位置控制
         phi2 = np.array(
             [[0, 0, 0, 0], [0, 0, 0, 0], [-1, 1, -self.TIME_WANTED, 0], [0, 0, 0, 0]]
         )
-        # Disable speed control
+        # 关闭速度控制
         front_vehicle, _ = self.road.neighbour_vehicles(self)
         if not front_vehicle or self.speed < front_vehicle.speed:
             phi1 *= 0
 
-        # Disable front position control
+        # 关闭前车位置控制
         if front_vehicle:
             d = self.lane_distance_to(front_vehicle)
             if d != self.DISTANCE_WANTED + self.TIME_WANTED * self.speed:
@@ -536,7 +534,7 @@ class LinearVehicle(IDMVehicle):
         return A, phi
 
     def collect_data(self):
-        """Store features and outputs for parameter regression."""
+        """保存用于参数回归的特征和输出。"""
         self.add_features(self.data, self.target_lane_index)
 
     def add_features(self, data, lane_index, output_lane=None):

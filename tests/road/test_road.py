@@ -8,7 +8,7 @@ from highway_env.vehicle.controller import ControlledVehicle
 
 @pytest.fixture
 def net() -> RoadNetwork:
-    # Diamond
+    # 菱形道路
     net = RoadNetwork()
     net.add_lane(0, 1, StraightLane([0, 0], [10, 0]))
     net.add_lane(1, 2, StraightLane([10, 0], [5, 5]))
@@ -21,13 +21,13 @@ def net() -> RoadNetwork:
 
 
 def test_network(net):
-    # Road
+    # 道路
     road = Road(network=net)
     v = ControlledVehicle(road, [5, 0], heading=0, target_speed=2)
     road.vehicles.append(v)
     assert v.lane_index == (0, 1, 0)
 
-    # Lane changes
+    # 变道
     dt = 1 / 15
     lane_index = v.target_lane_index
     lane_changes = 0
@@ -73,10 +73,10 @@ def test_polylane():
         right_boundary_points=sampled_right_boundary,
     )
 
-    # sample boundaries from both lanes and assert equal
+    # 对两条车道的边界采样，并断言相等
 
     num_samples = int(lane.length / 3)
-    # original lane
+    # 原始车道
     sampled_centreline = [
         lane.position(longitudinal=lon, lateral=0)
         for lon in np.linspace(0, lane.length, num_samples)
@@ -90,7 +90,7 @@ def test_polylane():
         for lon in np.linspace(0, lane.length, num_samples)
     ]
 
-    # polylane
+    # 折线车道
     polylane_sampled_centreline = [
         polylane.position(longitudinal=lon, lateral=0)
         for lon in np.linspace(0, polylane.length, num_samples)
@@ -108,7 +108,7 @@ def test_polylane():
         for lon in np.linspace(0, polylane.length, num_samples)
     ]
 
-    # assert equal (very coarse because of coarse sampling)
+    # 断言相等；由于采样较粗，允许较大的误差
     assert all(
         np.linalg.norm(
             np.array(sampled_centreline) - np.array(polylane_sampled_centreline), axis=1

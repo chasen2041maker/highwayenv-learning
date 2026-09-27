@@ -18,13 +18,13 @@ LaneIndex = Tuple[str, str, int]
 
 class RoadObject(ABC):
     """
-    Common interface for objects that appear on the road.
+    道路上物体的通用接口。
 
-    For now we assume all objects are rectangular.
+    目前假设所有物体均为矩形。
     """
 
-    LENGTH: float = 2  # Object length [m]
-    WIDTH: float = 2  # Object width [m]
+    LENGTH: float = 2  # 物体长度，单位为米。
+    WIDTH: float = 2  # 物体宽度，单位为米。
 
     @abstractmethod
     def __init__(
@@ -35,10 +35,10 @@ class RoadObject(ABC):
         speed: float = 0,
     ):
         """
-        :param road: the road instance where the object is placed in
-        :param position: cartesian position of object in the surface
-        :param heading: the angle from positive direction of horizontal axis
-        :param speed: cartesian speed of object in the surface
+        :param road: 放置物体的道路实例
+        :param position: 物体在平面上的笛卡尔坐标位置
+        :param heading: 相对于水平轴正方向的夹角
+        :param speed: 物体在平面上的运动速度
         """
         self.road = road
         self.position = np.array(position, dtype=np.float64)
@@ -53,14 +53,14 @@ class RoadObject(ABC):
             self.road.network.get_lane(self.lane_index) if self.lane_index else None
         )
 
-        # Enable collision with other collidables
+        # 允许与其他可碰撞物体发生碰撞。
         self.collidable = True
 
-        # Collisions have physical effects
+        # 碰撞会产生物理影响。
         self.solid = True
 
-        # If False, this object will not check its own collisions, but it can still collides with other objects that do
-        # check their collisions.
+        # 若为 False，此物体不主动检查自身碰撞，
+        # 但其他启用碰撞检查的物体仍可检测到与它的碰撞。
         self.check_collisions = True
 
         self.diagonal = np.sqrt(self.LENGTH**2 + self.WIDTH**2)
@@ -77,13 +77,13 @@ class RoadObject(ABC):
         speed: float | None = None,
     ) -> RoadObject:
         """
-        Create a vehicle on a given lane at a longitudinal position.
+        在指定车道的给定纵向位置创建物体。
 
-        :param road: a road object containing the road network
-        :param lane_index: index of the lane where the object is located
-        :param longitudinal: longitudinal position along the lane
-        :param speed: initial speed in [m/s]
-        :return: a RoadObject at the specified position
+        :param road: 包含道路网络的道路对象
+        :param lane_index: 物体所在车道的索引
+        :param longitudinal: 沿车道的纵向位置
+        :param speed: 初始速度，单位为 m/s
+        :return: 位于指定位置的 RoadObject
         """
         lane = road.network.get_lane(lane_index)
         if speed is None:
@@ -94,10 +94,10 @@ class RoadObject(ABC):
 
     def handle_collisions(self, other: RoadObject, dt: float = 0) -> None:
         """
-        Check for collision with another vehicle.
+        检查与另一辆车或物体的碰撞。
 
-        :param other: the other vehicle or object
-        :param dt: timestep to check for future collisions (at constant velocity)
+        :param other: 另一辆车或物体
+        :param dt: 在速度恒定的假设下检查未来碰撞的时间间隔
         """
         if other is self or not (self.check_collisions or other.check_collisions):
             return
@@ -123,7 +123,7 @@ class RoadObject(ABC):
                 other.hit = True
 
     def _is_colliding(self, other, dt):
-        # Fast spherical pre-check
+        # 用球形包围范围进行快速预检查。
         if (
             np.linalg.norm(other.position - self.position)
             > (self.diagonal + other.diagonal) / 2 + self.speed * dt
@@ -135,12 +135,12 @@ class RoadObject(ABC):
                     2,
                 ),
             )
-        # Accurate rectangular check
+        # 进行精确的矩形碰撞检查。
         return utils.are_polygons_intersecting(
             self.polygon(), other.polygon(), self.velocity * dt, other.velocity * dt
         )
 
-    # Just added for sake of compatibility
+    # 仅为兼容性而添加。
     def to_dict(self, origin_vehicle=None, observe_intentions=True):
         d = {
             "presence": 1,
@@ -187,11 +187,11 @@ class RoadObject(ABC):
         self, other: RoadObject, lane: AbstractLane | None = None
     ) -> float:
         """
-        Compute the signed distance to another object along a lane.
+        计算沿车道到另一物体的带符号距离。
 
-        :param other: the other object
-        :param lane: a lane
-        :return: the distance to the other other [m]
+        :param other: 另一物体
+        :param lane: 车道
+        :return: 到另一物体的距离，单位为米
         """
         if not other:
             return np.nan
@@ -205,7 +205,7 @@ class RoadObject(ABC):
 
     def intersects_with_line(self, p0: np.ndarray, p1: np.ndarray) -> bool:
         """
-        Determines if intersecting with a line segment.
+        判断是否与线段相交。
         """
         line_polygon = np.stack([p0, p1])
         rect_polygon = self.polygon()
@@ -217,7 +217,7 @@ class RoadObject(ABC):
 
     @property
     def on_road(self) -> bool:
-        """Is the object on its current lane, or off-road?"""
+        """判断物体是否位于当前车道内，或已驶出道路。"""
         assert self.lane
         return self.lane.on_lane(self.position)
 
@@ -232,7 +232,7 @@ class RoadObject(ABC):
 
 
 class Obstacle(RoadObject):
-    """Obstacles on the road."""
+    """道路上的障碍物。"""
 
     def __init__(
         self, road, position: Sequence[float], heading: float = 0, speed: float = 0
@@ -242,7 +242,7 @@ class Obstacle(RoadObject):
 
 
 class Landmark(RoadObject):
-    """Landmarks of certain areas on the road that must be reached."""
+    """标记道路中必须到达的特定区域的地标。"""
 
     def __init__(
         self, road, position: Sequence[float], heading: float = 0, speed: float = 0

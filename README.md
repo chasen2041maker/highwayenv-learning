@@ -7,6 +7,7 @@
 ## 学习入口
 
 - [运行脚本](demo.py)：车辆仿真、距离判断、目标速度档位和每局成绩单。
+- [分课题 demo](learning/demos/README.md)：独立保存源码验证实验，保留已有跟车脚本。
 - [当前学习进度](PROGRESS.md)：已做实验、待核对内容和下次接续点。
 - [学习路线](learning/ROADMAP.md)：从实践读源码，到规则策略、实验评测与强化学习。
 - [历史学习记录](learning/LEARNING_LOG.md)：按执行者区分的实验与理解证据。
@@ -57,8 +58,8 @@ pip install highway-env
 or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add highway-env          # adds to project dependencies and installs (preferred)
-uv pip install highway-env  # or install without adding to a project (pip install)
+uv add highway-env          # 添加到项目依赖并安装（推荐）
+uv pip install highway-env  # 或直接安装，不加入项目依赖（类似 pip install）
 ```
 
 We support **Linux** and **macOS** primarily, with **Windows** support maintained on a best-effort basis.
@@ -93,20 +94,20 @@ import highway_env
 
 gym.register_envs(highway_env)
 
-# Initialise the environment
+# 初始化环境
 env = gym.make("highway-v0", config={"lanes_count": 3}, render_mode="human")
 
-# Reset the environment to generate the first observation
+# 重置环境，生成第一次观察
 obs, info = env.reset()
 for _ in range(1000):
-    # this is where you would insert your policy
+    # 在这里加入你的驾驶策略
     action = env.action_space.sample()
 
-    # step (transition) through the environment with the action
-    # receiving the next observation, reward and if the episode has terminated or truncated
+    # 用选定动作推进环境一步，
+    # 获取下一次观察、奖励，以及回合是否终止或截断
     obs, reward, terminated, truncated, info = env.step(action)
 
-    # If the episode has ended then we can reset to start a new episode
+    # 如果本局已结束，则重置环境开始新一局
     if terminated or truncated:
         obs, info = env.reset()
 

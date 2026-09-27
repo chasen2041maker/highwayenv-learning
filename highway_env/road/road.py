@@ -27,11 +27,11 @@ class RoadNetwork:
 
     def add_lane(self, _from: str, _to: str, lane: AbstractLane) -> None:
         """
-        A lane is encoded as an edge in the road network.
+        将车道作为道路网络中的一条边。
 
-        :param _from: the node at which the lane starts.
-        :param _to: the node at which the lane ends.
-        :param AbstractLane lane: the lane geometry.
+        :param _from: 车道的起点节点
+        :param _to: 车道的终点节点
+        :param AbstractLane lane: 车道几何结构
         """
         if _from not in self.graph:
             self.graph[_from] = {}
@@ -41,8 +41,8 @@ class RoadNetwork:
 
     def add_lane_bidirectional(self, _from: str, _to: str, lane: AbstractLane) -> None:
         """
-        Add lane that allows for travel both ways.
-        (from _from to _to and from _to to _from)
+        添加允许双向通行的车道。
+        即从 _from 到 _to，以及从 _to 到 _from。
         """
         self.add_lane(_from, _to, lane)
         self.add_lane(_to, _from, lane)  # pylint: disable=arguments-out-of-order
@@ -50,10 +50,10 @@ class RoadNetwork:
 
     def get_lane(self, index: LaneIndex) -> AbstractLane:
         """
-        Get the lane geometry corresponding to a given index in the road network.
+        获取道路网络中给定索引对应的车道几何结构。
 
-        :param index: a tuple (origin node, destination node, lane id on the road).
-        :return: the corresponding lane geometry.
+        :param index: 元组（起点节点、终点节点、该道路上的车道编号）
+        :return: 对应的车道几何结构
         """
         _from, _to, _id = index
         if _id is None:
@@ -66,11 +66,11 @@ class RoadNetwork:
         self, position: np.ndarray, heading: float | None = None
     ) -> LaneIndex:
         """
-        Get the index of the lane closest to a world position.
+        获取离某个世界位置最近的车道索引。
 
-        :param position: a world position [m].
-        :param heading: a heading angle [rad].
-        :return: the index of the closest lane.
+        :param position: 世界位置，单位为米
+        :param heading: 朝向角，单位为弧度
+        :return: 最近车道的索引
         """
         indexes, distances = [], []
         for _from, to_dict in self.graph.items():
@@ -88,29 +88,30 @@ class RoadNetwork:
         np_random: np.random.RandomState = np.random,
     ) -> LaneIndex:
         """
-        Get the index of the next lane that should be followed after finishing the current lane.
+        获取驶完当前车道后应跟随的下一条车道索引。
 
-        - If a plan is available and matches with current lane, follow it.
-        - Else, pick next road randomly.
-        - If it has the same number of lanes as current road, stay in the same lane.
-        - Else, pick next road's closest lane.
-        :param current_index: the index of the current target lane.
-        :param route: the planned route, if any.
-        :param position: the vehicle position.
-        :param np_random: a source of randomness.
-        :return: the index of the next lane to be followed when current lane is finished.
+        - 如果存在与当前车道匹配的规划路线，则遵循规划。
+        - 否则，随机选择下一条道路。
+        - 如果下一条道路与当前道路的车道数相同，则保持车道编号。
+        - 否则，选择下一条道路上最近的车道。
+
+        :param current_index: 当前目标车道的索引
+        :param route: 规划路线，可以为空
+        :param position: 车辆位置
+        :param np_random: 随机数生成器
+        :return: 驶完当前车道后要跟随的下一条车道索引
         """
         _from, _to, _id = current_index
         next_to = next_id = None
-        # Pick next road according to planned route
+        # 根据规划路线选择下一条道路
         if route:
             if (
                 route[0][:2] == current_index[:2]
-            ):  # We just finished the first step of the route, drop it.
+            ):  # 刚刚完成路线中的第一段，将其移除。
                 route.pop(0)
             if (
                 route and route[0][0] == _to
-            ):  # Next road in route is starting at the end of current road.
+            ):  # 路线中的下一条道路从当前道路的终点开始。
                 _, next_to, next_id = route[0]
             elif route:
                 logger.warning(
@@ -119,12 +120,12 @@ class RoadNetwork:
                     )
                 )
 
-        # Compute current projected (desired) position
+        # 计算当前投影后的期望位置
         long, lat = self.get_lane(current_index).local_coordinates(position)
         projected_position = self.get_lane(current_index).position(long, lateral=0)
-        # If next route is not known
+        # 如果下一段路线未知
         if not next_to:
-            # Pick the one with the closest lane to projected target position
+            # 选择车道最接近投影目标位置的道路
             try:
                 lanes_dists = [
                     (
@@ -134,12 +135,12 @@ class RoadNetwork:
                         ),
                     )
                     for next_to in self.graph[_to].keys()
-                ]  # (next_to, next_id, distance)
+                ]  # 元组内容：(next_to, next_id, distance)
                 next_to, next_id, _ = min(lanes_dists, key=lambda x: x[-1])
             except KeyError:
                 return current_index
         else:
-            # If it is known, follow it and get the closest lane
+            # 如果下一段路线已知，则沿该路线选择最近车道
             next_id, _ = self.next_lane_given_next_road(
                 _from, _to, _id, next_to, next_id, projected_position
             )
@@ -154,11 +155,11 @@ class RoadNetwork:
         next_id: int,
         position: np.ndarray,
     ) -> tuple[int, float]:
-        # If next road has same number of lane, stay on the same lane
+        # 如果下一条道路的车道数相同，则保持车道编号
         if len(self.graph[_from][_to]) == len(self.graph[_to][next_to]):
             if next_id is None:
                 next_id = _id
-        # Else, pick closest lane
+        # 否则，选择最近的车道
         else:
             lanes = range(len(self.graph[_to][next_to]))
             next_id = min(
@@ -168,11 +169,11 @@ class RoadNetwork:
 
     def bfs_paths(self, start: str, goal: str) -> list[list[str]]:
         """
-        Breadth-first search of all routes from start to goal.
+        通过广度优先搜索查找从起点到终点的所有路线。
 
-        :param start: starting node
-        :param goal: goal node
-        :return: list of paths from start to goal.
+        :param start: 起点节点
+        :param goal: 终点节点
+        :return: 从起点到终点的路径列表
         """
         queue = [(start, [start])]
         while queue:
@@ -189,18 +190,18 @@ class RoadNetwork:
 
     def shortest_path(self, start: str, goal: str) -> list[str]:
         """
-        Breadth-first search of shortest path from start to goal.
+        通过广度优先搜索查找从起点到终点的最短路径。
 
-        :param start: starting node
-        :param goal: goal node
-        :return: shortest path from start to goal.
+        :param start: 起点节点
+        :param goal: 终点节点
+        :return: 从起点到终点的最短路径
         """
         return next(self.bfs_paths(start, goal), [])
 
     def all_side_lanes(self, lane_index: LaneIndex) -> list[LaneIndex]:
         """
-        :param lane_index: the index of a lane.
-        :return: all lanes belonging to the same road.
+        :param lane_index: 车道索引
+        :return: 属于同一条道路的所有车道
         """
         return [
             (lane_index[0], lane_index[1], i)
@@ -209,8 +210,8 @@ class RoadNetwork:
 
     def side_lanes(self, lane_index: LaneIndex) -> list[LaneIndex]:
         """
-        :param lane_index: the index of a lane.
-        :return: indexes of lanes next to a an input lane, to its right or left.
+        :param lane_index: 车道索引
+        :return: 输入车道左侧或右侧相邻车道的索引
         """
         _from, _to, _id = lane_index
         lanes = []
@@ -224,7 +225,7 @@ class RoadNetwork:
     def is_same_road(
         lane_index_1: LaneIndex, lane_index_2: LaneIndex, same_lane: bool = False
     ) -> bool:
-        """Is lane 1 in the same road as lane 2?"""
+        """车道 1 和车道 2 是否属于同一条道路？"""
         return lane_index_1[:2] == lane_index_2[:2] and (
             not same_lane or lane_index_1[2] == lane_index_2[2]
         )
@@ -233,7 +234,7 @@ class RoadNetwork:
     def is_leading_to_road(
         lane_index_1: LaneIndex, lane_index_2: LaneIndex, same_lane: bool = False
     ) -> bool:
-        """Is lane 1 leading to of lane 2?"""
+        """车道 1 是否通向车道 2？"""
         return lane_index_1[1] == lane_index_2[0] and (
             not same_lane or lane_index_1[2] == lane_index_2[2]
         )
@@ -247,15 +248,15 @@ class RoadNetwork:
         depth: int = 0,
     ) -> bool:
         """
-        Is the lane 2 leading to a road within lane 1's route?
+        车道 2 是否通向车道 1 路线中的某条道路？
 
-        Vehicles on these lanes must be considered for collisions.
-        :param lane_index_1: origin lane
-        :param lane_index_2: target lane
-        :param route: route from origin lane, if any
-        :param same_lane: compare lane id
-        :param depth: search depth from lane 1 along its route
-        :return: whether the roads are connected
+        碰撞检测需要考虑这些车道上的车辆。
+        :param lane_index_1: 起始车道
+        :param lane_index_2: 目标车道
+        :param route: 从起始车道出发的路线，可以为空
+        :param same_lane: 是否比较车道编号
+        :param depth: 从车道 1 沿路线搜索的深度
+        :return: 两条道路是否连通
         """
         if RoadNetwork.is_same_road(
             lane_index_2, lane_index_1, same_lane
@@ -263,17 +264,17 @@ class RoadNetwork:
             return True
         if depth > 0:
             if route and route[0][:2] == lane_index_1[:2]:
-                # Route is starting at current road, skip it
+                # 路线从当前道路开始，跳过这一段
                 return self.is_connected_road(
                     lane_index_1, lane_index_2, route[1:], same_lane, depth
                 )
             elif route and route[0][0] == lane_index_1[1]:
-                # Route is continuing from current road, follow it
+                # 路线从当前道路继续向前，沿路线搜索
                 return self.is_connected_road(
                     route[0], lane_index_2, route[1:], same_lane, depth - 1
                 )
             else:
-                # Recursively search all roads at intersection
+                # 递归搜索路口处的所有道路
                 _from, _to, _id = lane_index_1
                 return any(
                     [
@@ -338,20 +339,20 @@ class RoadNetwork:
         current_lane_index: LaneIndex,
     ) -> tuple[np.ndarray, float]:
         """
-        Get the absolute position and heading along a route composed of several lanes at some local coordinates.
+        在由多条车道组成的路线中，根据局部坐标获取绝对位置和朝向。
 
-        :param route: a planned route, list of lane indexes
-        :param longitudinal: longitudinal position
-        :param lateral: : lateral position
-        :param current_lane_index: current lane index of the vehicle
-        :return: position, heading
+        :param route: 规划路线，即车道索引列表
+        :param longitudinal: 纵向位置
+        :param lateral: 横向位置
+        :param current_lane_index: 车辆当前的车道索引
+        :return: 位置和朝向
         """
 
         def _get_route_head_with_id(route_):
             lane_index_ = route_[0]
             if lane_index_[2] is None:
-                # We know which road segment will be followed by the vehicle, but not which lane.
-                # Hypothesis: the vehicle will keep the same lane_id as the current one.
+                # 已知车辆将跟随的道路段，但不知道具体车道。
+                # 假设：车辆保持与当前车道相同的 lane_id。
                 id_ = (
                     current_lane_index[2]
                     if current_lane_index[2]
@@ -400,7 +401,7 @@ class RoadNetwork:
 
 
 class Road:
-    """A road is a set of lanes, and a set of vehicles driving on these lanes."""
+    """道路由一组车道，以及在这些车道上行驶的一组车辆组成。"""
 
     def __init__(
         self,
@@ -412,14 +413,14 @@ class Road:
         neighbour_vehicles_connected_lanes: bool = False,
     ) -> None:
         """
-        New road.
+        创建道路。
 
-        :param network: the road network describing the lanes
-        :param vehicles: the vehicles driving on the road
-        :param road_objects: the objects on the road including obstacles and landmarks
-        :param np.random.RandomState np_random: a random number generator for vehicle behaviour
-        :param record_history: whether the recent trajectories of vehicles should be recorded for display
-        :param neighbour_vehicles_connected_lanes: whether to search connected lane segments for neighbours
+        :param network: 描述车道的道路网络
+        :param vehicles: 在道路上行驶的车辆
+        :param road_objects: 道路物体，包括障碍物和地标
+        :param np.random.RandomState np_random: 用于车辆行为的随机数生成器
+        :param record_history: 是否记录车辆最近的轨迹以供显示
+        :param neighbour_vehicles_connected_lanes: 查找邻车时是否搜索相连的车道段
         """
         self.network = network
         self.vehicles = vehicles or []
@@ -472,15 +473,15 @@ class Road:
         )
 
     def act(self) -> None:
-        """Decide the actions of each entity on the road."""
+        """决定道路上各个实体的动作。"""
         for vehicle in self.vehicles:
             vehicle.act()
 
     def step(self, dt: float) -> None:
         """
-        Step the dynamics of each entity on the road.
+        推进道路上各个实体的运动。
 
-        :param dt: timestep [s]
+        :param dt: 时间步长，单位为秒
         """
         for vehicle in self.vehicles:
             vehicle.step(dt)
@@ -494,17 +495,15 @@ class Road:
         self, vehicle: kinematics.Vehicle, lane_index: LaneIndex = None
     ) -> tuple[kinematics.Vehicle | None, kinematics.Vehicle | None]:
         """
-        Find the preceding and following vehicles of a given vehicle.
+        查找给定车辆的前车和后车。
 
-        When ``neighbour_vehicles_connected_lanes`` is enabled, connected
-        next/previous lane segments are also searched so vehicles near
-        segment boundaries are detected.
+        启用 ``neighbour_vehicles_connected_lanes`` 后，还会搜索相连的前后车道段，
+        以检测位于路段边界附近的车辆。
 
-        :param vehicle: the vehicle whose neighbours must be found
-        :param lane_index: the lane on which to look for preceding and following vehicles.
-                     It doesn't have to be the current vehicle lane but can also be another lane, in which case the
-                     vehicle is projected on it considering its local coordinates in the lane.
-        :return: its preceding vehicle, its following vehicle
+        :param vehicle: 需要查找邻车的车辆
+        :param lane_index: 用于查找前后车辆的车道；可以不是该车当前所在的车道。
+            若是其他车道，则根据车辆在该车道中的局部坐标进行投影。
+        :return: 前车和后车
         """
         lane_index = lane_index or vehicle.lane_index
         if not lane_index:
@@ -517,8 +516,8 @@ class Road:
         lanes_offsets: list[tuple[AbstractLane, float]] = [(lane, 0)]
 
         if self.neighbour_vehicles_connected_lanes:
-            # Offsets convert each connected lane's longitudinal coordinate
-            # into the ego lane coordinate frame.
+            # 通过偏移量，将各个相连车道的纵向坐标
+            # 转换到自车所在车道的坐标系。
             _from, _to, _id = lane_index
 
             for next_lanes in self.network.graph.get(_to, {}).values():
@@ -552,7 +551,7 @@ class Road:
                 if s_v < s and (s_rear is None or s_v > s_rear):
                     s_rear = s_v
                     v_rear = v
-                break  # matched on this lane, no need to check others
+                break  # 已在这条车道中匹配，无需检查其他车道
 
         return v_front, v_rear
 

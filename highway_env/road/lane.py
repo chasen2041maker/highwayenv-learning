@@ -11,7 +11,7 @@ from highway_env.utils import Vector, class_from_path, get_class_path, wrap_to_p
 
 
 class AbstractLane:
-    """A lane on the road, described by its central curve."""
+    """道路上的车道，由其中心曲线描述。"""
 
     metaclass__ = ABCMeta
     DEFAULT_WIDTH: float = 4
@@ -23,59 +23,59 @@ class AbstractLane:
     @abstractmethod
     def position(self, longitudinal: float, lateral: float) -> np.ndarray:
         """
-        Convert local lane coordinates to a world position.
+        将车道局部坐标转换为世界位置。
 
-        :param longitudinal: longitudinal lane coordinate [m]
-        :param lateral: lateral lane coordinate [m]
-        :return: the corresponding world position [m]
+        :param longitudinal: 车道纵向坐标，单位为米
+        :param lateral: 车道横向坐标，单位为米
+        :return: 对应的世界位置，单位为米
         """
         raise NotImplementedError()
 
     @abstractmethod
     def local_coordinates(self, position: np.ndarray) -> tuple[float, float]:
         """
-        Convert a world position to local lane coordinates.
+        将世界位置转换为车道局部坐标。
 
-        :param position: a world position [m]
-        :return: the (longitudinal, lateral) lane coordinates [m]
+        :param position: 世界位置，单位为米
+        :return: 车道的（纵向、横向）坐标，单位为米
         """
         raise NotImplementedError()
 
     @abstractmethod
     def heading_at(self, longitudinal: float) -> float:
         """
-        Get the lane heading at a given longitudinal lane coordinate.
+        获取给定纵向位置处的车道朝向。
 
-        :param longitudinal: longitudinal lane coordinate [m]
-        :return: the lane heading [rad]
+        :param longitudinal: 车道纵向坐标，单位为米
+        :return: 车道朝向角，单位为弧度
         """
         raise NotImplementedError()
 
     @abstractmethod
     def width_at(self, longitudinal: float) -> float:
         """
-        Get the lane width at a given longitudinal lane coordinate.
+        获取给定纵向位置处的车道宽度。
 
-        :param longitudinal: longitudinal lane coordinate [m]
-        :return: the lane width [m]
+        :param longitudinal: 车道纵向坐标，单位为米
+        :return: 车道宽度，单位为米
         """
         raise NotImplementedError()
 
     @classmethod
     def from_config(cls, config: dict):
         """
-        Create lane instance from config
+        根据配置创建车道实例。
 
-        :param config: json dict with lane parameters
+        :param config: 包含车道参数的 JSON 字典
         """
         raise NotImplementedError()
 
     @abstractmethod
     def to_config(self) -> dict:
         """
-        Write lane parameters to dict which can be serialized to json
+        将车道参数写入可序列化为 JSON 的字典。
 
-        :return: dict of lane parameters
+        :return: 车道参数字典
         """
         raise NotImplementedError()
 
@@ -87,13 +87,13 @@ class AbstractLane:
         margin: float = 0,
     ) -> bool:
         """
-        Whether a given world position is on the lane.
+        判断给定世界位置是否位于车道上。
 
-        :param position: a world position [m]
-        :param longitudinal: (optional) the corresponding longitudinal lane coordinate, if known [m]
-        :param lateral: (optional) the corresponding lateral lane coordinate, if known [m]
-        :param margin: (optional) a supplementary margin around the lane width
-        :return: is the position on the lane?
+        :param position: 世界位置，单位为米
+        :param longitudinal: 可选，已知时传入对应的车道纵向坐标，单位为米
+        :param lateral: 可选，已知时传入对应的车道横向坐标，单位为米
+        :param margin: 可选，在车道宽度两侧额外添加的余量
+        :return: 该位置是否在车道上
         """
         if longitudinal is None or lateral is None:
             longitudinal, lateral = self.local_coordinates(position)
@@ -105,10 +105,10 @@ class AbstractLane:
 
     def is_reachable_from(self, position: np.ndarray) -> bool:
         """
-        Whether the lane is reachable from a given world position
+        判断从给定世界位置能否到达该车道。
 
-        :param position: the world position [m]
-        :return: is the lane reachable?
+        :param position: 世界位置，单位为米
+        :return: 该车道是否可达
         """
         if self.forbidden:
             return False
@@ -127,7 +127,7 @@ class AbstractLane:
         return longitudinal > self.length - self.VEHICLE_LENGTH / 2
 
     def distance(self, position: np.ndarray):
-        """Compute the L1 distance [m] from a position to the lane."""
+        """计算某位置到车道的 L1 距离，单位为米。"""
         s, r = self.local_coordinates(position)
         return abs(r) + max(s - self.length, 0) + max(0 - s, 0)
 
@@ -137,7 +137,7 @@ class AbstractLane:
         heading: float | None,
         heading_weight: float = 1.0,
     ):
-        """Compute a weighted distance in position and heading to the lane."""
+        """综合位置和朝向，计算到车道的加权距离。"""
         if heading is None:
             return self.distance(position)
         s, r = self.local_coordinates(position)
@@ -145,12 +145,12 @@ class AbstractLane:
         return abs(r) + max(s - self.length, 0) + max(0 - s, 0) + heading_weight * angle
 
     def local_angle(self, heading: float, long_offset: float):
-        """Compute non-normalised angle of heading to the lane."""
+        """计算相对车道朝向的未归一化角度。"""
         return wrap_to_pi(heading - self.heading_at(long_offset))
 
 
 class LineType(IntEnum):
-    """A lane side line type."""
+    """车道边线类型。"""
 
     NONE = 0
     STRIPED = 1
@@ -159,7 +159,7 @@ class LineType(IntEnum):
 
 
 class StraightLane(AbstractLane):
-    """A lane going in straight line."""
+    """沿直线延伸的车道。"""
 
     def __init__(
         self,
@@ -172,14 +172,14 @@ class StraightLane(AbstractLane):
         priority: int = 0,
     ) -> None:
         """
-        New straight lane.
+        创建直线车道。
 
-        :param start: the lane starting position [m]
-        :param end: the lane ending position [m]
-        :param width: the lane width [m]
-        :param line_types: the type of lines on both sides of the lane
-        :param forbidden: is changing to this lane forbidden
-        :param priority: priority level of the lane, for determining who has right of way
+        :param start: 车道起点，单位为米
+        :param end: 车道终点，单位为米
+        :param width: 车道宽度，单位为米
+        :param line_types: 车道两侧的边线类型
+        :param forbidden: 是否禁止变道进入该车道
+        :param priority: 车道优先级，用于决定通行权
         """
         self.start = np.array(start)
         self.end = np.array(end)
@@ -236,7 +236,7 @@ class StraightLane(AbstractLane):
 
 
 class SineLane(StraightLane):
-    """A sinusoidal lane."""
+    """正弦曲线车道。"""
 
     def __init__(
         self,
@@ -252,13 +252,13 @@ class SineLane(StraightLane):
         priority: int = 0,
     ) -> None:
         """
-        New sinusoidal lane.
+        创建正弦曲线车道。
 
-        :param start: the lane starting position [m]
-        :param end: the lane ending position [m]
-        :param amplitude: the lane oscillation amplitude [m]
-        :param pulsation: the lane pulsation [rad/m]
-        :param phase: the lane initial phase [rad]
+        :param start: 车道起点，单位为米
+        :param end: 车道终点，单位为米
+        :param amplitude: 车道摆动的振幅，单位为米
+        :param pulsation: 车道的空间角频率，单位为弧度/米
+        :param phase: 车道初始相位，单位为弧度
         """
         super().__init__(
             start, end, width, line_types, forbidden, speed_limit, priority
@@ -311,7 +311,7 @@ class SineLane(StraightLane):
 
 
 class CircularLane(AbstractLane):
-    """A lane going in circle arc."""
+    """沿圆弧延伸的车道。"""
 
     def __init__(
         self,
@@ -388,7 +388,7 @@ class CircularLane(AbstractLane):
 
 class PolyLaneFixedWidth(AbstractLane):
     """
-    A fixed-width lane defined by a set of points and approximated with a 2D Hermite polynomial.
+    由一组点定义、使用二维 Hermite 多项式近似的固定宽度车道。
     """
 
     def __init__(
@@ -446,7 +446,7 @@ class PolyLaneFixedWidth(AbstractLane):
 
 class PolyLane(PolyLaneFixedWidth):
     """
-    A lane defined by a set of points and approximated with a 2D Hermite polynomial.
+    由一组点定义、使用二维 Hermite 多项式近似的车道。
     """
 
     def __init__(
@@ -482,7 +482,7 @@ class PolyLane(PolyLaneFixedWidth):
 
     def _width_at_s(self, longitudinal: float) -> float:
         """
-        Calculate width by taking the minimum distance between centerline and each boundary at a given s-value. This compensates indentations in boundary lines.
+        在给定 s 值处，根据中心线到两侧边界的最短距离计算宽度，以补偿边界线的凹陷。
         """
         center_x, center_y = self.position(longitudinal, 0)
         right_x, right_y = self.right_boundary(
@@ -506,8 +506,9 @@ class PolyLane(PolyLaneFixedWidth):
 
     def _init_width(self):
         """
-        Pre-calculate sampled width values in about 1m distance to reduce computation during runtime. It is assumed that the width does not change significantly within 1-2m.
-        Using numpys linspace ensures that min and max s-values are contained in the samples.
+        按约 1 米间距预先采样车道宽度，减少运行时计算。
+        假设车道宽度在 1～2 米内不会明显变化。
+        使用 NumPy 的 linspace 确保采样包含最小和最大的 s 值。
         """
         s_samples = np.linspace(
             0,

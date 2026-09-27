@@ -10,12 +10,11 @@ from highway_env.road.road import Road, RoadNetwork
 
 class TwoWayEnv(AbstractEnv):
     """
-    A risk management task: the agent is driving on a two-way lane with icoming traffic.
+    风险管理任务：智能体在有对向来车的双向道路上驾驶。
 
-    It must balance making progress by overtaking and ensuring safety.
+    它必须在超车前进与保证安全之间作出权衡。
 
-    These conflicting objectives are implemented by a reward signal and a constraint signal,
-    in the CMDP/BMDP framework.
+    在 CMDP/BMDP 框架中，使用奖励信号和约束信号描述这两个相互冲突的目标。
     """
 
     @classmethod
@@ -38,9 +37,9 @@ class TwoWayEnv(AbstractEnv):
 
     def _reward(self, action: int) -> float:
         """
-        The vehicle is rewarded for driving with high speed
-        :param action: the action performed
-        :return: the reward of the state-action transition
+        车辆高速行驶时获得奖励。
+        :param action: 执行的动作
+        :return: 此次状态和动作转移对应的奖励
         """
         return sum(
             self.config.get(name, 0) * reward
@@ -59,7 +58,7 @@ class TwoWayEnv(AbstractEnv):
         }
 
     def _is_terminated(self) -> bool:
-        """The episode is over if the ego vehicle crashed or the time is out."""
+        """自车碰撞或时间耗尽时，本回合结束。"""
         return self.vehicle.crashed
 
     def _is_truncated(self) -> bool:
@@ -71,13 +70,13 @@ class TwoWayEnv(AbstractEnv):
 
     def _make_road(self, length=800):
         """
-        Make a road composed of a two-way road.
+        创建双向道路。
 
-        :return: the road
+        :return: 道路
         """
         net = RoadNetwork()
 
-        # Lanes
+        # 车道
         net.add_lane(
             "a",
             "b",
@@ -116,9 +115,9 @@ class TwoWayEnv(AbstractEnv):
 
     def _make_vehicles(self) -> None:
         """
-        Populate a road with several vehicles on the road
+        在道路上放置若干车辆。
 
-        :return: the ego-vehicle
+        :return: 自车
         """
         road = self.road
         ego_vehicle = self.action_type.vehicle_class(

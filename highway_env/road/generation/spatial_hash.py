@@ -9,12 +9,11 @@ from .engine.gen_utils import Lane
 
 def point_to_gridpoint(point: np.ndarray, gridsize: int) -> tuple[int, int]:
     """
-    Converts a world coordinate to the corresponding grid coordinate
-    for spatial hashing.
+    将世界坐标转换为空间哈希使用的对应网格坐标。
 
-    :param point: world position
-    :param gridsize: length of a grid box
-    :return: grid tuple coordinate
+    :param point: 世界位置
+    :param gridsize: 网格单元的边长
+    :return: 网格坐标元组
     """
     return tuple(np.floor(point / gridsize).astype(int))
 
@@ -23,16 +22,13 @@ def lanes_spatial_hash(
     lanes: list[Lane], gridsize: int = 100, use_boundaries: bool = True
 ) -> tuple[defaultdict[Any, set], defaultdict[Any, set]]:
     """
-    Partitions lanes into separate grids for significantly
-    faster proximal checks.
+    将车道划分到不同网格中，以显著加快邻近检查。
 
-    :param lanes: list of lanes
-    :param gridsize: length of a grid box
-    :param use_boundaries: if true, will use boundary points instead of centerline points
-    (defaults to True)
-    :return: **lane_to_grid** (maps lane indices to the gridpoints they occupy)
-    and **grid_to_lane** (maps gridpoints to the indices of lanes that inhabit
-    them)
+    :param lanes: 车道列表
+    :param gridsize: 网格单元的边长
+    :param use_boundaries: 为 True 时使用边界点代替中心线点，默认为 True
+    :return: **lane_to_grid**（车道索引到其占用网格点的映射），以及
+        **grid_to_lane**（网格点到其中车道索引的映射）
     """
 
     lane_to_grid = defaultdict(set)
@@ -50,8 +46,8 @@ def lanes_spatial_hash(
             lane_to_grid[lane_id].add(gridpoint)
             grid_to_lanes[gridpoint].add(lane_id)
 
-            # In the case that we traverse precisely diagonally,
-            # skipping over a grid:
+            # 处理恰好沿对角线穿过的情况，
+            # 此时可能跳过一个网格：
             if (
                 last_gridpoint is not None
                 and np.abs(gridpoint[0] - last_gridpoint[0]) == 1
@@ -86,10 +82,10 @@ def get_proximal_lanes_wrt_gridpoint(
     extended: bool = False,
 ) -> set:
     """
-    :param grid_to_lanes: map from gridpoints to the indices of lanes that inhabit them
-    :param gridpoint: grid tuple coordinate
-    :param extended: whether or not to count lanes in neighboring grids
-    :return: set of proximal lane indices
+    :param grid_to_lanes: 从网格点到其中车道索引的映射
+    :param gridpoint: 网格坐标元组
+    :param extended: 是否计入相邻网格中的车道
+    :return: 附近车道索引的集合
     """
     proximal_lanes = set()
     for offset in gridhash_offsets if extended else [(0, 0)]:
@@ -106,11 +102,11 @@ def get_proximal_lanes_wrt_lane(
     extended: bool = False,
 ) -> set:
     """
-    :param lane_id: index of reference lane
-    :param lane_to_grid: map from lanes to the gridpoints they occupy
-    :param grid_to_lanes: map from gridpoints to the lanes that inhabit them
-    :param extended: whether or not to count lanes in neighboring grids
-    :return: set of proximal lane indices
+    :param lane_id: 参考车道的索引
+    :param lane_to_grid: 从车道到其占用网格点的映射
+    :param grid_to_lanes: 从网格点到其中车道的映射
+    :param extended: 是否计入相邻网格中的车道
+    :return: 附近车道索引的集合
     """
     proximal_lanes = set()
     for gridpoint in lane_to_grid[lane_id]:

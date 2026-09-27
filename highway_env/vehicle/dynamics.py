@@ -12,16 +12,16 @@ from highway_env.vehicle.kinematics import Vehicle
 
 def rk4(func: Callable, state: np.ndarray, dt: float = 0.01, t: float = 0, **kwargs):
     """
-    single-step fourth-order numerical integration (RK4) method
-    func: system of first order ODEs
-    state: current state vector [y1, y2, y3, ...]
-    dt: discrete time step size
-    t: current time
-    **kwargs: additional parameters for ODE system
-    returns: y evaluated at time k+1
+    单步四阶龙格-库塔数值积分（RK4）。
+    func：一阶常微分方程组。
+    state：当前状态向量 [y1, y2, y3, ...]。
+    dt：离散时间步长。
+    t：当前时刻。
+    **kwargs：传给方程组的其他参数。
+    返回：k+1 时刻的状态 y。
     """
 
-    # evaluate derivative at several stages within time interval
+    # 在当前时间间隔的多个阶段计算导数。
     f1 = func(t, state, **kwargs)
     f2 = func(t + dt / 2, state + (f1 * (dt / 2)), **kwargs)
     f3 = func(t + dt / 2, state + (f2 * (dt / 2)), **kwargs)
@@ -31,19 +31,19 @@ def rk4(func: Callable, state: np.ndarray, dt: float = 0.01, t: float = 0, **kwa
 
 class BicycleVehicle(Vehicle):
     """
-    A dynamical bicycle model, with tire friction and slipping.
+    包含轮胎摩擦与侧滑的动力学自行车模型。
 
-    See Chapter 2 of Lateral Vehicle Dynamics. Vehicle Dynamics and Control. Rajamani, R. (2011)
+    参见 Rajamani, R. (2011) 的《Vehicle Dynamics and Control》第 2 章 Lateral Vehicle Dynamics。
     """
 
-    MASS: float = 1  # [kg]
+    MASS: float = 1  # 单位：千克
     LENGTH_A: float = Vehicle.LENGTH / 2  # [m]
     LENGTH_B: float = Vehicle.LENGTH / 2  # [m]
-    INERTIA_Z: float = 1 / 12 * MASS * (Vehicle.LENGTH**2 + Vehicle.WIDTH**2)  # [kg.m2]
+    INERTIA_Z: float = 1 / 12 * MASS * (Vehicle.LENGTH**2 + Vehicle.WIDTH**2)  # 单位：千克·平方米
     FRICTION_FRONT: float = 15.0 * MASS  # [N]
     FRICTION_REAR: float = 15.0 * MASS  # [N]
 
-    MAX_ANGULAR_SPEED: float = 2 * np.pi  # [rad/s]
+    MAX_ANGULAR_SPEED: float = 2 * np.pi  # 单位：弧度/秒
 
     def __init__(
         self, road: Road, position: Vector, heading: float = 0, speed: float = 0
@@ -73,9 +73,9 @@ class BicycleVehicle(Vehicle):
 
     def derivative_func(self, time: float, state: np.ndarray, **kwargs) -> np.ndarray:
         """
-        See Chapter 2 of Lateral Vehicle Dynamics. Vehicle Dynamics and Control. Rajamani, R. (2011)
+        参见 Rajamani, R. (2011) 的《Vehicle Dynamics and Control》第 2 章 Lateral Vehicle Dynamics。
 
-        :return: the state derivative
+        :return: 状态导数
         """
         del time
         heading, speed, lateral_speed, yaw_rate = state[2:, 0]
@@ -85,7 +85,7 @@ class BicycleVehicle(Vehicle):
         theta_vr = np.arctan2(lateral_speed - self.LENGTH_B * yaw_rate, speed)  # (2.28)
         f_yf = 2 * self.FRICTION_FRONT * (delta_f - theta_vf)  # (2.25)
         f_yr = 2 * self.FRICTION_REAR * (delta_r - theta_vr)  # (2.26)
-        if abs(speed) < 1:  # Low speed dynamics: damping of lateral speed and yaw rate
+        if abs(speed) < 1:  # 低速动力学：对横向速度和横摆角速度施加阻尼。
             f_yf = (
                 -self.MASS * lateral_speed - self.INERTIA_Z / self.LENGTH_A * yaw_rate
             )
@@ -113,13 +113,14 @@ class BicycleVehicle(Vehicle):
     @property
     def derivative_linear(self) -> np.ndarray:
         """
-        Linearized lateral dynamics.
+        线性化的横向动力学。
 
-        This model is based on the following assumptions:
-        - the vehicle is moving with a constant longitudinal speed
-        - the steering input to front tires and the corresponding slip angles are small
+        模型基于以下假设：
+        - 车辆保持恒定纵向速度；
+        - 前轮转向输入及相应侧偏角较小。
 
-        See https://pdfs.semanticscholar.org/bb9c/d2892e9327ec1ee647c30c320f2089b290c1.pdf, Chapter 3.
+        参见下列文献的第 3 章：
+        https://pdfs.semanticscholar.org/bb9c/d2892e9327ec1ee647c30c320f2089b290c1.pdf
         """
         x = np.array([[self.lateral_speed], [self.yaw_rate]])
         u = np.array([[self.action["steering"]]])
@@ -152,7 +153,7 @@ class BicycleVehicle(Vehicle):
 
     def clip_actions(self) -> None:
         super().clip_actions()
-        # Required because of the linearisation
+        # 线性化要求进行此处理。
         self.action["steering"] = np.clip(
             self.action["steering"], -np.pi / 2, np.pi / 2
         )
@@ -162,9 +163,9 @@ class BicycleVehicle(Vehicle):
 
     def lateral_lpv_structure(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        State: [lateral speed v, yaw rate r]
+        状态：[横向速度 v, 横摆角速度 r]。
 
-        :return: lateral dynamics A0, phi, B such that dx = (A0 + theta^T phi)x + B u
+        :return: 横向动力学 A0、phi、B，使 dx = (A0 + theta^T phi)x + B u
         """
         B = np.array(
             [
@@ -207,9 +208,9 @@ class BicycleVehicle(Vehicle):
 
     def lateral_lpv_dynamics(self) -> tuple[np.ndarray, np.ndarray]:
         """
-        State: [lateral speed v, yaw rate r]
+        状态：[横向速度 v, 横摆角速度 r]。
 
-        :return: lateral dynamics A, B
+        :return: 横向动力学矩阵 A、B
         """
         A0, phi, B = self.lateral_lpv_structure()
         self.theta = np.array([self.FRICTION_FRONT, self.FRICTION_REAR])
@@ -218,11 +219,11 @@ class BicycleVehicle(Vehicle):
 
     def full_lateral_lpv_structure(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        State: [position y, yaw psi, lateral speed v, yaw rate r]
+        状态：[位置 y, 横摆角 psi, 横向速度 v, 横摆角速度 r]。
 
-        The system is linearized around psi = 0
+        系统在 psi = 0 附近进行线性化。
 
-        :return: lateral dynamics A, phi, B
+        :return: 横向动力学 A、phi、B
         """
         A_lat, phi_lat, B_lat = self.lateral_lpv_structure()
 
@@ -245,11 +246,11 @@ class BicycleVehicle(Vehicle):
 
     def full_lateral_lpv_dynamics(self) -> tuple[np.ndarray, np.ndarray]:
         """
-        State: [position y, yaw psi, lateral speed v, yaw rate r]
+        状态：[位置 y, 横摆角 psi, 横向速度 v, 横摆角速度 r]。
 
-        The system is linearized around psi = 0
+        系统在 psi = 0 附近进行线性化。
 
-        :return: lateral dynamics A, B
+        :return: 横向动力学矩阵 A、B
         """
         A0, phi, B = self.full_lateral_lpv_structure()
         self.theta = [self.FRICTION_FRONT, self.FRICTION_REAR]
@@ -281,23 +282,23 @@ def simulate(dt: float = 0.1) -> None:
     )
 
     for t in time:
-        # Act
+        # 执行动作
         u = K @ vehicle.state[[1, 2, 4, 5]]
         omega = 2 * np.pi / 20
         u_p = 0 * np.array([[-20 * omega * np.sin(omega * t) * dt]])
         u += u_p
-        # Record
+        # 记录数据
         xx.append(
             np.array([vehicle.position[0], vehicle.position[1], vehicle.heading])[
                 :, np.newaxis
             ]
         )
         uu.append(u)
-        # Interval
+        # 区间
         lpv.set_control(u, state=vehicle.state[[1, 2, 4, 5]])
         lpv.step(dt)
         # x_i_t = lpv.change_coordinates(lpv.x_i_t, back=True, interval=True)
-        # Step
+        # 推进一步
         vehicle.act({"acceleration": 0, "steering": u})
         vehicle.step(dt)
 

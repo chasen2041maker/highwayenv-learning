@@ -51,20 +51,20 @@ def test_front():
 
 
 def test_collision():
-    # Collision between two vehicles
+    # 两辆车之间的碰撞
     r = Road(RoadNetwork.straight_road_network(1))
     v1 = Vehicle(road=r, position=[0, 0], speed=10)
     v2 = Vehicle(road=r, position=[4, 0], speed=20)
     v1.handle_collisions(v2)
 
     assert v1.crashed and v2.crashed
-    # Collision between a vehicle and an obstacle
+    # 车辆与障碍物之间的碰撞
     v3 = Vehicle(road=r, position=[20, 0], speed=10)
     o = Obstacle(road=r, position=[23, 0])
     v3.handle_collisions(o)
 
     assert v3.crashed and o.crashed
-    # Collision between a vehicle and a landmark
+    # 车辆与地标之间的碰撞
     v4 = Vehicle(road=r, position=[40, 0], speed=10)
     l = Landmark(road=r, position=[43, 0])
     v4.handle_collisions(l)

@@ -18,21 +18,18 @@ from .engine import (
 
 def default_params() -> dict:
     """
-    :return: Dict of parameters for procedural road generation:
-    - **target_num_endpoints** - Number of endpoints to generate
-    - **forward_speed** - length of individual lane line segments
-    - **age_of_maturity** - timesteps before an agent can replicate or die
-    - **lane_width** - Lane width, uniform across all lanes
-    - **perlin_variation_params** - Perlin noise bounds for the following
-    spatially varying attributes:
-    **jitteriness** (erraticity of how agents turn left/right),
-    **max_turn_speed** (approximate angular velocity of an agent),
-    **replication_chance** (the tendency of forks in the road to occur), and
-    **spontaneous_death_chance** (the tendency of dead-ends to occur)
-    - **disable_prints** - Determines whether to include printed progress
-    indicators
-    - **seed** - Integer seed for the internal random number generator.
-    ``None`` for a random seed
+    :return: 程序化道路生成的参数字典：
+        - **target_num_endpoints**：要生成的端点数量。
+        - **forward_speed**：每条车道线段的长度。
+        - **age_of_maturity**：智能体可以复制或终止之前需要经过的时间步数。
+        - **lane_width**：车道宽度，所有车道保持一致。
+        - **perlin_variation_params**：以下空间变化属性的 Perlin 噪声范围：
+            - **jitteriness**：智能体左右转向的不规则程度。
+            - **max_turn_speed**：智能体的大致角速度。
+            - **replication_chance**：道路产生分叉的倾向。
+            - **spontaneous_death_chance**：道路形成死胡同的倾向。
+        - **disable_prints**：是否关闭进度信息输出。
+        - **seed**：内部随机数生成器的整数种子；``None`` 表示随机种子。
     """
     return {
         "target_num_endpoints": 2,
@@ -53,11 +50,11 @@ def generate_random_lanes(
     rng: np.random.Generator, provided_params: dict | None = None
 ) -> list[Lane]:
     """
-    Generates a procedurally generated lane network.
+    通过程序化生成创建车道网络。
 
-    :param rng: Random number generator
-    :param provided_params: Generation parameters dict (optional)
-    :return: list of lanes
+    :param rng: 随机数生成器
+    :param provided_params: 可选的生成参数字典
+    :return: 车道列表
     """
     params = default_params()
     if provided_params is not None:
@@ -69,7 +66,7 @@ def generate_random_lanes(
     twist_iterations = params["forward_speed"] * 2
     twist_step = 0.0002 / params["forward_speed"]
 
-    # Phase 1: Random swarm generation
+    # 阶段 1：随机群体生成
     lanes = generate_road_network_skeleton(
         target_num_endpoints=max(2, params["target_num_endpoints"]),
         forward_speed=params["forward_speed"],
@@ -81,7 +78,7 @@ def generate_random_lanes(
         disable_prints=params["disable_prints"],
     )
 
-    # Phase 2: Rectification
+    # 阶段 2：校正
     rectify_map(
         lanes,
         merge_radius=merge_radius + params["forward_speed"],
@@ -89,7 +86,7 @@ def generate_random_lanes(
         disable_prints=params["disable_prints"],
     )
 
-    # Phase 3: Optimization
+    # 阶段 3：优化
     twist_optimize(
         lanes,
         iterations=twist_iterations,
@@ -98,13 +95,13 @@ def generate_random_lanes(
         disable_prints=params["disable_prints"],
     )
 
-    # Phase 4: Boundary creation
+    # 阶段 4：创建边界
     generate_lane_boundaries(lanes, params["lane_width"])
     for node in sorted(get_nodeset(lanes)):
         correct_junction_boundaries(lanes, node)
         seal_dead_end(lanes, node)
 
-    # Phase 5: Validation
+    # 阶段 5：验证
     invalids = get_invalid_lanes(
         lanes, params["forward_speed"], rng=rng, disable_prints=params["disable_prints"]
     )
@@ -120,7 +117,7 @@ def generate_random_lanes(
 
 def serialize_lanes(lanes: list[Lane]) -> list[dict]:
     """
-    Converts a Lane to a json-ready list of dicts.
+    将 Lane 转换为可写入 JSON 的字典列表。
     """
     lanes_serialized = []
 
@@ -146,7 +143,7 @@ def serialize_lanes(lanes: list[Lane]) -> list[dict]:
 
 def unserialize_lanes(lanes_serialized: list[dict]) -> list[Lane]:
     """
-    Converts a list of Lane-dicts to a list of Lane.
+    将 Lane 字典列表转换为 Lane 对象列表。
     """
     lanes = []
 
@@ -169,7 +166,7 @@ def unserialize_lanes(lanes_serialized: list[dict]) -> list[Lane]:
 
 def save_lanes_to_disk(filename: str, lanes: list[Lane]):
     """
-    Saves a list of lanes directly to a binary .npz file.
+    将车道列表直接保存为二进制 .npz 文件。
     """
     data = {}
 
@@ -184,7 +181,7 @@ def save_lanes_to_disk(filename: str, lanes: list[Lane]):
 
 def load_lanes_from_disk(filename: str) -> list[Lane]:
     """
-    Loads npz file and reconstructs the list of Lane objects.
+    加载 npz 文件并重新构造 Lane 对象列表。
     """
     with np.load(filename) as data:
         assert len(data.keys()) % 4 == 0

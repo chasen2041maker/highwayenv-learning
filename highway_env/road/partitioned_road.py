@@ -35,15 +35,15 @@ class PartitionedRoadNetwork(RoadNetwork):
                 width = lane.width_at(long)
                 left_pts.append(
                     lane.position(long, -width)
-                )  # intentionally 2 times as wide
+                )  # 这里有意将宽度设为两倍
                 right_pts.append(lane.position(long, width))
 
         last_gridpoint = None
         for pt in chain(left_pts, right_pts):
             gridpoint = point_to_gridpoint(pt, self.partition_gridsize)
             self.grid_to_lanes[gridpoint].add(lane_index)
-            # In the case that we traverse precisely diagonally, skipping
-            # over a grid:
+            # 处理恰好沿对角线穿过的情况，此时可能
+            # 跳过一个网格：
             if (
                 last_gridpoint is not None
                 and np.abs(gridpoint[0] - last_gridpoint[0]) == 1

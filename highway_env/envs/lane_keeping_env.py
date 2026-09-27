@@ -12,7 +12,7 @@ from highway_env.vehicle.dynamics import BicycleVehicle
 
 
 class LaneKeepingEnv(AbstractEnv):
-    """A lane keeping control task."""
+    """车道保持控制任务。"""
 
     def __init__(self, config: dict = None) -> None:
         super().__init__(config)
@@ -177,9 +177,9 @@ class LaneKeepingEnv(AbstractEnv):
             for x_t in self.lpv.change_coordinates(
                 self.lpv.x_i_t, back=True, interval=True
             ):
-                # lateral state to full state
+                # 从横向状态还原完整状态。
                 np.put(state, [1, 2, 4, 5], x_t)
-                # full state to absolute coordinates
+                # 将完整状态转换为绝对坐标。
                 interval.append(state.squeeze(-1).copy())
             self.interval_trajectory.append(interval)
         self.trajectory.append(copy.deepcopy(self.vehicle.state))

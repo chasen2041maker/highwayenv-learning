@@ -1,14 +1,14 @@
 """
-Benchmark render-mode FPS across highway-env environments.
+对 highway-env 各环境的渲染帧率进行基准测试。
 
-Measures wall-clock frames-per-second for three render modes:
-  - None          (headless, no rendering at all)
-  - "rgb_array"   (offscreen rendering, returns pixel buffer)
-  - "human"       (on-screen window rendering)
+按实际耗时测量三种模式的每秒帧数：
+- None：无界面，完全不渲染。
+- "rgb_array"：离屏渲染，返回像素缓冲区。
+- "human"：在屏幕窗口中渲染。
 
-The first two set OFFSCREEN_RENDERING=1 so pygame never tries to open a display.
+前两种模式设置 OFFSCREEN_RENDERING=1，避免 pygame 尝试打开显示窗口。
 
-Run:
+运行示例：
     uv run python scripts/regression_test/bench_render_fps.py
     uv run python scripts/regression_test/bench_render_fps.py --envs highway-v0 intersection-v0
     uv run python scripts/regression_test/bench_render_fps.py --steps 200 --repeat 50
@@ -59,7 +59,7 @@ def run_episode(
     n_steps: int,
     seed: int,
 ) -> float:
-    """Run one episode and return elapsed seconds."""
+    """运行一局，并返回耗时秒数。"""
     env = gym.make(
         env_id,
         render_mode=render_mode,
@@ -92,7 +92,7 @@ def bench_render_mode(
     n_steps: int,
     n_repeat: int,
 ) -> dict:
-    """Repeat run_episode n_repeat times (seed increments each iter) and return stats."""
+    """重复运行 run_episode 共 n_repeat 次，每次递增种子，并返回统计结果。"""
     old_val = os.environ.get("OFFSCREEN_RENDERING")
     os.environ["OFFSCREEN_RENDERING"] = "1" if offscreen else "0"
     try:

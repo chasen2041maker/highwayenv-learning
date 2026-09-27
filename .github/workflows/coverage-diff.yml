@@ -26,7 +26,7 @@ jobs:
         id: diff_gate
         run: |
           ref="origin/${{ github.base_ref }}"
-          # Count additions only & limit the diff to highway_env/
+          # 只统计新增行，并将差异范围限制在 highway_env/
           count=$(git diff --numstat "${ref}"...HEAD -- highway_env/ | awk '{sum += $1} END {print sum+0}')
           echo "ref=${ref}" >> "$GITHUB_OUTPUT"
           echo "count=${count}" >> "$GITHUB_OUTPUT"

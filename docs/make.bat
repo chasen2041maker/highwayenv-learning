@@ -2,7 +2,7 @@
 
 pushd %~dp0
 
-REM Command file for Sphinx documentation
+REM Sphinx 文档的命令文件
 
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build

@@ -16,10 +16,9 @@ Observation = np.ndarray
 
 class HighwayEnv(AbstractEnv):
     """
-    A highway driving environment.
+    高速公路驾驶环境。
 
-    The vehicle is driving on a straight highway with several lanes, and is rewarded for reaching a high speed,
-    staying on the rightmost lanes and avoiding collisions.
+    车辆在多车道直线高速公路上行驶；高速行驶、靠右行驶和避免碰撞会获得奖励。
     """
 
     @classmethod
@@ -39,12 +38,12 @@ class HighwayEnv(AbstractEnv):
                 "duration": 40,  # [s]
                 "ego_spacing": 2,
                 "vehicles_density": 1,
-                "collision_reward": -1,  # The reward received when colliding with a vehicle.
-                "right_lane_reward": 0.1,  # The reward received when driving on the right-most lanes, linearly mapped to
-                # zero for other lanes.
-                "high_speed_reward": 0.4,  # The reward received when driving at full speed, linearly mapped to zero for
-                # lower speeds according to config["reward_speed_range"].
-                "lane_change_reward": 0,  # The reward received at each lane change action.
+                "collision_reward": -1,  # 与其他车辆碰撞时的奖励。
+                "right_lane_reward": 0.1,  # 在最右侧车道行驶时的奖励；其他车道的奖励
+                # 按车道位置线性递减至零。
+                "high_speed_reward": 0.4,  # 达到奖励速度上限时的奖励；速度较低时，
+                # 根据 config["reward_speed_range"] 线性递减至零。
+                "lane_change_reward": 0,  # 每次变道动作对应的奖励。
                 "reward_speed_range": [20, 30],
                 "normalize_reward": True,
                 "offroad_terminal": False,
@@ -57,7 +56,7 @@ class HighwayEnv(AbstractEnv):
         self._create_vehicles()
 
     def _create_road(self) -> None:
-        """Create a road composed of straight adjacent lanes."""
+        """创建由相邻直线车道组成的道路。"""
         self.road = Road(
             network=RoadNetwork.straight_road_network(
                 self.config["lanes_count"], speed_limit=30
@@ -70,7 +69,7 @@ class HighwayEnv(AbstractEnv):
         )
 
     def _create_vehicles(self) -> None:
-        """Create some new random vehicles of a given type, and add them on the road."""
+        """随机创建指定类型的车辆，并将其加入道路。"""
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
         other_per_controlled = near_split(
             self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"]
@@ -99,9 +98,9 @@ class HighwayEnv(AbstractEnv):
 
     def _reward(self, action: Action) -> float:
         """
-        The reward is defined to foster driving at high speed, on the rightmost lanes, and to avoid collisions.
-        :param action: the last action performed
-        :return: the corresponding reward
+        奖励鼓励车辆高速行驶、靠右行驶并避免碰撞。
+        :param action: 上一次执行的动作
+        :return: 对应的奖励
         """
         rewards = self._rewards(action)
         reward = sum(
@@ -126,7 +125,7 @@ class HighwayEnv(AbstractEnv):
             if isinstance(self.vehicle, ControlledVehicle)
             else self.vehicle.lane_index[2]
         )
-        # Use forward speed rather than speed, see https://github.com/Farama-Foundation/HighwayEnv/issues/268
+        # 使用前向速度分量，参见 https://github.com/Farama-Foundation/HighwayEnv/issues/268
         forward_speed = self.vehicle.speed * np.cos(self.vehicle.heading)
         scaled_speed = utils.lmap(
             forward_speed, self.config["reward_speed_range"], [0, 1]
@@ -139,7 +138,7 @@ class HighwayEnv(AbstractEnv):
         }
 
     def _is_terminated(self) -> bool:
-        """The episode is over if the ego vehicle crashed."""
+        """自车发生碰撞时，本回合结束。"""
         return (
             self.vehicle.crashed
             or self.config["offroad_terminal"]
@@ -147,16 +146,16 @@ class HighwayEnv(AbstractEnv):
         )
 
     def _is_truncated(self) -> bool:
-        """The episode is truncated if the time limit is reached."""
+        """达到时间上限时截断本回合。"""
         return self.time >= self.config["duration"]
 
 
 class HighwayEnvFast(HighwayEnv):
     """
-    A variant of highway-v0 with faster execution:
-        - lower simulation frequency
-        - fewer vehicles in the scene (and fewer lanes, shorter episode duration)
-        - only check collision of controlled vehicles with others
+    运行更快的 highway-v0 变体：
+    - 降低仿真频率；
+    - 减少场景中的车辆和车道，并缩短回合时长；
+    - 只检查受控车辆与其他车辆之间的碰撞。
     """
 
     @classmethod
@@ -176,7 +175,7 @@ class HighwayEnvFast(HighwayEnv):
 
     def _create_vehicles(self) -> None:
         super()._create_vehicles()
-        # Disable collision check for uncontrolled vehicles
+        # 关闭非受控车辆之间的碰撞检查。
         for vehicle in self.road.vehicles:
             if vehicle not in self.controlled_vehicles:
                 vehicle.check_collisions = False

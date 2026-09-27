@@ -53,7 +53,7 @@ Documentation = "https://highway-env.farama.org/"
 "Bug Report" = "https://github.com/Farama-Foundation/HighwayEnv/issues"
 Changelog = "https://highway-env.farama.org/main/release_notes"
 
-# NOTE: These two lines have no effect currently, don't be confused
+# 注意：下面两行目前不生效，请勿误解。
 [project.entry-points."gymnasium.envs.__root__"]
 highway-env = "highway_env:_register_highway_envs"
 
@@ -112,12 +112,12 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    # "E",  # pycodestyle errors
-    # "F",  # pyflakes
-    # "UP", # pyupgrade
-    # "I",  # isort
-    # "D",  # pydocstyle
-    "B",  # bugbear
+    # "E",  # pycodestyle 代码风格错误
+    # "F",  # pyflakes 静态检查
+    # "UP", # pyupgrade 语法升级检查
+    # "I",  # isort 导入排序检查
+    # "D",  # pydocstyle 文档字符串风格检查
+    "B",  # bugbear 常见错误检查
 ]
 ignore = []
 

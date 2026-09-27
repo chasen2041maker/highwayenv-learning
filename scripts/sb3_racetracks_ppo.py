@@ -25,13 +25,13 @@ if __name__ == "__main__":
         verbose=2,
         tensorboard_log="racetrack_ppo/",
     )
-    # Train the model
+    # 训练模型
     if TRAIN:
         model.learn(total_timesteps=int(1e5))
         model.save("racetrack_ppo/model")
         del model
 
-    # Run the algorithm
+    # 运行算法
     model = PPO.load("racetrack_ppo/model", env=env)
 
     env = gym.make("racetrack-v0")
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         done = truncated = False
         obs, info = env.reset()
         while not (done or truncated):
-            # Predict
+            # 预测动作
             action, _states = model.predict(obs, deterministic=True)
-            # Get reward
+            # 执行动作并获取奖励
             obs, reward, done, truncated, info = env.step(action)
-            # Render
+            # 渲染
             env.render()
     env.close()

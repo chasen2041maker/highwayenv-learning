@@ -34,28 +34,28 @@ from .validation import (
 
 
 __all__ = [
-    # agents
+    # 道路生成智能体
     "generate_road_network_skeleton",
-    # rectify
+    # 道路校正
     "rectify_map",
     "rectify_short_lanes",
     "combine_nodes",
     "split_lanes",
     "remove_identical_reference_lanes",
     "prune_intersecting_lanes",
-    # optimize
+    # 道路优化
     "twist_optimize",
-    # boundaries
+    # 道路边界
     "generate_lane_boundaries",
     "correct_junction_boundaries",
     "seal_dead_end",
-    # validation
+    # 道路验证
     "get_invalid_lanes",
     "kill_lanes",
     "remove_disjoint_clusters",
     "get_all_intersection_points",
     "check_lanes_type_validity",
-    # gen_utils
+    # 生成工具函数
     "Lane",
     "Endpoint",
     "get_radially_sorted_endpoints",

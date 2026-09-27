@@ -19,7 +19,7 @@ from highway_env.utils import lmap
 
 
 # ==================================
-#        Policy Architecture
+# 策略网络结构
 # ==================================
 
 
@@ -36,9 +36,9 @@ def activation_factory(activation_type):
 
 class BaseModule(torch.nn.Module):
     """
-    Base torch.nn.Module implementing basic features:
-        - initialization factory
-        - normalization parameters
+    实现基础功能的 torch.nn.Module 基类：
+    - 初始化工厂；
+    - 归一化参数。
     """
 
     def __init__(self, activation_type="RELU", reset_type="XAVIER"):
@@ -87,7 +87,7 @@ class MultiLayerPerceptron(BaseModule):
 
     def forward(self, x):
         if self.reshape:
-            x = x.reshape(x.shape[0], -1)  # We expect a batch of vectors
+            x = x.reshape(x.shape[0], -1)  # 预期输入为一批向量
         for layer in self.layers:
             x = self.activation(layer(x.float()))
         if self.out_size:
@@ -101,7 +101,7 @@ class MultiLayerPerceptron(BaseModule):
     def action_scores(self, x):
         if self.is_policy:
             if self.reshape:
-                x = x.reshape(x.shape[0], -1)  # We expect a batch of vectors
+                x = x.reshape(x.shape[0], -1)  # 预期输入为一批向量
             for layer in self.layers:
                 x = self.activation(layer(x.float()))
             if self.out_size:
@@ -134,7 +134,7 @@ class EgoAttention(BaseModule):
         input_all = torch.cat(
             (ego.view(batch_size, 1, self.feature_size), others), dim=1
         )
-        # Dimensions: Batch, entity, head, feature_per_head
+        # 维度顺序：批次、实体、注意力头、每个头的特征
         key_all = self.key_all(input_all).view(
             batch_size, n_entities, self.heads, self.features_per_head
         )
@@ -145,7 +145,7 @@ class EgoAttention(BaseModule):
             batch_size, 1, self.heads, self.features_per_head
         )
 
-        # Dimensions: Batch, head, entity, feature_per_head
+        # 维度顺序：批次、注意力头、实体、每个头的特征
         key_all = key_all.permute(0, 2, 1, 3)
         value_all = value_all.permute(0, 2, 1, 3)
         query_ego = query_ego.permute(0, 2, 1, 3)
@@ -190,7 +190,7 @@ class EgoAttentionNetwork(BaseModule):
         return ego_embedded_att
 
     def split_input(self, x, mask=None):
-        # Dims: batch, entities, features
+        # 维度顺序：批次、实体、特征
         if len(x.shape) == 2:
             x = x.unsqueeze(axis=0)
         ego = x[:, 0:1, :]
@@ -213,23 +213,24 @@ class EgoAttentionNetwork(BaseModule):
 
 def attention(query, key, value, mask=None, dropout=None):
     """
-    Compute a Scaled Dot Product Attention.
+    计算缩放点积注意力。
 
     Parameters
     ----------
     query
-        size: batch, head, 1 (ego-entity), features
+        形状：批次、注意力头、1（自车实体）、特征。
     key
-        size: batch, head, entities, features
+        形状：批次、注意力头、实体、特征。
     value
-        size: batch, head, entities, features
+        形状：批次、注意力头、实体、特征。
     mask
-        size: batch,  head, 1 (absence feature), 1 (ego-entity)
+        形状：批次、注意力头、1（缺席特征）、1（自车实体）。
     dropout
+        随机丢弃设置。
 
     Returns
     -------
-    The attention softmax(QK^T/sqrt(dk))V
+        注意力结果 softmax(QK^T/sqrt(dk))V。
     """
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1)) / np.sqrt(d_k)
@@ -251,9 +252,8 @@ attention_network_kwargs = dict(
 
 class CustomExtractor(BaseFeaturesExtractor):
     """
-    :param observation_space: (gym.Space)
-    :param features_dim: (int) Number of features extracted.
-        This corresponds to the number of unit for the last layer.
+    :param observation_space: 观察空间，类型为 gym.Space
+    :param features_dim: 提取的特征数量，类型为 int，对应最后一层的单元数
     """
 
     def __init__(self, observation_space: gym.spaces.Box, **kwargs):
@@ -268,7 +268,7 @@ class CustomExtractor(BaseFeaturesExtractor):
 
 
 # ==================================
-#     Environment configuration
+# 环境配置
 # ==================================
 
 
@@ -296,7 +296,7 @@ env_kwargs = {
 
 
 # ==================================
-#        Display attention matrix
+# 显示注意力矩阵
 # ==================================
 
 
@@ -344,7 +344,7 @@ def compute_vehicles_attention(env, model):
     mask = mask.squeeze()
     v_attention = {}
     obs_type = env.observation_type
-    if hasattr(obs_type, "agents_observation_types"):  # Handle multi-agent observation
+    if hasattr(obs_type, "agents_observation_types"):  # 处理多智能体观察
         obs_type = obs_type.agents_observation_types[0]
     for v_index in range(obs.shape[0]):
         if mask[v_index]:
@@ -366,7 +366,7 @@ def compute_vehicles_attention(env, model):
 
 
 # ==================================
-#        Main script
+# 主程序
 # ==================================
 
 if __name__ == "__main__":
@@ -394,9 +394,9 @@ if __name__ == "__main__":
             verbose=2,
             tensorboard_log="highway_attention_ppo/",
         )
-        # Train the agent
+        # 训练智能体
         model.learn(total_timesteps=200 * 1000)
-        # Save the agent
+        # 保存智能体
         model.save("highway_attention_ppo/model")
 
     model = PPO.load("highway_attention_ppo/model")

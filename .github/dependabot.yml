@@ -1,14 +1,14 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
+# 启用 Dependabot 版本更新时，需要指定
+# 要更新的软件包生态，以及依赖清单所在位置。
+# 完整配置选项请参阅文档：
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
 updates:
-  # Enable version updates for GitHub Actions
+  # 启用 GitHub Actions 的版本更新
   - package-ecosystem: "github-actions"
-    # Look for GitHub Actions workflows in the `root` directory
+    # 在根目录查找 GitHub Actions 工作流
     directory: "/"
-    # Check the for updates once a week
+    # 每周检查一次更新
     schedule:
       interval: "weekly"

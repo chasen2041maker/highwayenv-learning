@@ -15,24 +15,23 @@ try:
 except Exception:  # nosec
     pass
 
-# Hide pygame support prompt
+# 隐藏 pygame 的支持提示。
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 
 def _register_highway_envs():
-    """Import the envs module so that envs register themselves.
+    """导入 envs 模块，使各环境完成注册。
 
-    This function is idempotent: calling it multiple times (e.g. when
-    gymnasium resolves a ``"highway_env:env-id"`` spec in a subprocess)
-    will not raise duplicate-registration errors.
+    此函数具有幂等性：多次调用（例如 Gymnasium 在子进程中解析
+    ``"highway_env:env-id"`` 规范时）不会引发重复注册错误。
     """
-    # Skip if environments are already registered (idempotent)
+    # 环境已经注册时直接跳过，保证重复调用的结果一致。
     if "highway-v0" in registry:
         return
 
     from highway_env.envs.common.abstract import MultiAgentWrapper
 
-    # exit_env.py
+    # 出口场景：exit_env.py
     register(
         id="exit-v0",
         entry_point="highway_env.envs.exit_env:ExitEnv",
@@ -42,7 +41,7 @@ def _register_highway_envs():
         entry_point="highway_env.envs.exit_env:ConnectedLaneExitEnv",
     )
 
-    # highway_env.py
+    # 高速公路场景：highway_env.py
     register(
         id="highway-v0",
         entry_point="highway_env.envs.highway_env:HighwayEnv",
@@ -53,7 +52,7 @@ def _register_highway_envs():
         entry_point="highway_env.envs.highway_env:HighwayEnvFast",
     )
 
-    # intersection_env.py
+    # 交叉路口场景：intersection_env.py
     register(
         id="intersection-v0",
         entry_point="highway_env.envs.intersection_env:IntersectionEnv",
@@ -84,14 +83,14 @@ def _register_highway_envs():
         additional_wrappers=(MultiAgentWrapper.wrapper_spec(),),
     )
 
-    # lane_keeping_env.py
+    # 车道保持场景：lane_keeping_env.py
     register(
         id="lane-keeping-v0",
         entry_point="highway_env.envs.lane_keeping_env:LaneKeepingEnv",
         max_episode_steps=200,
     )
 
-    # merge_env.py
+    # 汇入场景：merge_env.py
     register(
         id="merge-v0",
         entry_point="highway_env.envs.merge_env:MergeEnv",
@@ -109,7 +108,7 @@ def _register_highway_envs():
         entry_point="highway_env.envs.merge_env:ConnectedLaneMergeGenericEnv",
     )
 
-    # parking_env.py
+    # 泊车场景：parking_env.py
     register(
         id="parking-v0",
         entry_point="highway_env.envs.parking_env:ParkingEnv",
@@ -125,7 +124,7 @@ def _register_highway_envs():
         entry_point="highway_env.envs.parking_env:ParkingEnvParkedVehicles",
     )
 
-    # racetrack_env.py
+    # 赛道场景：racetrack_env.py
     register(
         id="racetrack-v0",
         entry_point="highway_env.envs.racetrack_env:RacetrackEnv",
@@ -151,7 +150,7 @@ def _register_highway_envs():
         entry_point="highway_env.envs.racetrack_env:ConnectedLaneRacetrackEnvOval",
     )
 
-    # roundabout_env.py
+    # 环岛场景：roundabout_env.py
     register(
         id="roundabout-v0",
         entry_point="highway_env.envs.roundabout_env:RoundaboutEnv",
@@ -169,21 +168,21 @@ def _register_highway_envs():
         entry_point="highway_env.envs.roundabout_env:ConnectedLaneRoundaboutGenericEnv",
     )
 
-    # two_way_env.py
+    # 双向道路场景：two_way_env.py
     register(
         id="two-way-v0",
         entry_point="highway_env.envs.two_way_env:TwoWayEnv",
         max_episode_steps=15,
     )
 
-    # u_turn_env.py
+    # 掉头场景：u_turn_env.py
     register(id="u-turn-v0", entry_point="highway_env.envs.u_turn_env:UTurnEnv")
     register(
         id="u-turn-v1",
         entry_point="highway_env.envs.u_turn_env:ConnectedLaneUTurnEnv",
     )
 
-    # random_road_env.py
+    # 随机道路场景：random_road_env.py
     register(
         id="random-road-v0",
         entry_point="highway_env.envs.random_road_env:RandomRoadEnv",

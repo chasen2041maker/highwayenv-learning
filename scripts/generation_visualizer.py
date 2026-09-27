@@ -27,10 +27,10 @@ from highway_env.road.generation.spatial_hash import lanes_spatial_hash
 
 
 """
-Visualizes the step-by-step process of procedural road network generation for debugging.
+逐步可视化程序化道路网络的生成过程，用于调试。
 """
 
-# Generation Parameters -------------------------------------
+# 生成参数 -------------------------------------
 params = {
     "target_num_endpoints": 200,
     "forward_speed": 10,
@@ -58,7 +58,7 @@ twist_step = 0.0002 / params["forward_speed"]
 disable_prints = params["disable_prints"]
 
 
-# Drawing -------------------------------------
+# 绘图 -------------------------------------
 
 GRID_COLOR = (35, 35, 35)
 ORIGIN_COLOR = (80, 80, 80)
@@ -67,9 +67,9 @@ LABEL_COLOR = (150, 150, 150)
 
 LANE_COLOR = (180, 180, 180)
 LANE_COLORS = {"left_points": (180, 180, 180), "right_points": (180, 180, 180)}
-NODE_COLOR = (255, 200, 60)  # node label text
-NODE_BG_COLOR = (30, 30, 30)  # small background pill behind label
-NODE_RADIUS_COLOR = (60, 120, 180)  # merge-radius circle
+NODE_COLOR = (255, 200, 60)  # 节点标签文字
+NODE_BG_COLOR = (30, 30, 30)  # 标签后方的小胶囊形背景
+NODE_RADIUS_COLOR = (60, 120, 180)  # 合并半径圆
 CENTER_POINTS_COLOR = (0, 255, 0)
 INTERSECTION_POINT_COLOR = (255, 0, 0)
 JUNCTION_POINT_COLOR = (0, 0, 255)
@@ -78,7 +78,7 @@ DRAW_MERGE_RADII = False
 DRAW_ENDPOINTS = True
 
 PAN_SPEED = (
-    5.0  # world units per frame at zoom=1 (scaled by 1/zoom so speed feels constant)
+    5.0  # zoom=1 时每帧移动的世界坐标距离，按 1/zoom 缩放以保持视觉速度一致
 )
 ZOOM_SPEED = 0.05
 MIN_ZOOM = 0.05
@@ -114,7 +114,7 @@ def draw_circle(surface, camera, color, wx, wy, world_radius, width=0):
 
 
 def draw_rect(surface, camera, color, wx, wy, world_w, world_h, width=0):
-    """Draw a rectangle centred at (wx, wy) in world space."""
+    """在世界坐标中绘制以 (wx, wy) 为中心的矩形。"""
     sx, sy = camera.world_to_screen(wx - world_w / 2, wy - world_h / 2)
     pw = max(1, int(camera.scale(world_w)))
     ph = max(1, int(camera.scale(world_h)))
@@ -139,13 +139,13 @@ def draw_line(surface, camera, color, wx1, wy1, wx2, wy2, width=1):
 def draw_grid(surface, camera, spacing=50):
     w, h = surface.get_size()
 
-    # world bounds visible on screen
+    # 屏幕中可见的世界坐标范围
     left = camera.x - (w / 2) / camera.zoom
     right = camera.x + (w / 2) / camera.zoom
     top = camera.y - (h / 2) / camera.zoom
     bottom = camera.y + (h / 2) / camera.zoom
 
-    # snap to grid spacing
+    # 对齐网格间距
     x = math.floor(left / spacing) * spacing
     while x <= right:
         sx, _ = camera.world_to_screen(x, 0)
@@ -163,10 +163,10 @@ def draw_grid(surface, camera, spacing=50):
 
 def draw_lanes(surface, camera, lanes, node_font, stage):
     """
-    Draw all lanes as polylines, then overlay node ID labels.
+    将所有车道画成折线，再叠加节点编号标签。
     """
 
-    # --- Drawing road polylanes ---
+    # --- 绘制道路折线车道 ---
     sides = ["left_points", "right_points"]
     for lane in lanes:
         if stage <= 8:
@@ -184,7 +184,7 @@ def draw_lanes(surface, camera, lanes, node_font, stage):
                 width = max(1, int(1 * camera.zoom))
                 pygame.draw.lines(surface, LANE_COLORS[side], False, screen_pts, width)
 
-    # --- Draw merge-radius circles at every node ---
+    # --- 在每个节点处绘制合并半径圆 ---
     if DRAW_MERGE_RADII:
         for lane in lanes:
             pts = lane.points
@@ -195,17 +195,17 @@ def draw_lanes(surface, camera, lanes, node_font, stage):
                 r = max(1, int(camera.scale(MERGE_RADIUS)))
                 pygame.draw.circle(surface, NODE_RADIUS_COLOR, (sx, sy), r, 1)
 
-    # --- Draw node labels ---
+    # --- 绘制节点标签 ---
     if DRAW_ENDPOINTS:
         node_labels = []
         for lane in lanes:
             pts = lane.points
             if not pts:
                 continue
-            # start node
+            # 起点节点
             sx, sy = camera.world_to_screen(*pts[0])
             node_labels.append((lane.start, sx, sy))
-            # end node
+            # 终点节点
             sx, sy = camera.world_to_screen(*pts[-1])
             node_labels.append((lane.end, sx, sy))
 
@@ -252,7 +252,7 @@ def draw_hud(surface, font, camera):
         y += 18
 
 
-# Main -------------------------------------
+# 主流程 -------------------------------------
 pygame.init()
 SCREEN_W, SCREEN_H = 1280, 720
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H), pygame.RESIZABLE)
@@ -389,7 +389,7 @@ while running:
                 print(f"Finished executing stage {stage}.")
                 stage += 1
 
-    # --- Camera movement ---
+    # --- 镜头移动 ---
     keys = pygame.key.get_pressed()
     pan = PAN_SPEED / camera.zoom
 
@@ -407,7 +407,7 @@ while running:
     if keys[pygame.K_e]:
         camera.zoom = max(MIN_ZOOM, camera.zoom * (1 - ZOOM_SPEED))
 
-    # --- Rendering ---
+    # --- 渲染 ---
     screen.fill(BG_COLOR)
     draw_grid(screen, camera, spacing=50)
     draw_lanes(screen, camera, lanes, node_font, stage)

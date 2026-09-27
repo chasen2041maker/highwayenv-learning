@@ -44,7 +44,7 @@ def assess_get_closest_index(lanes):
     avg_elapsed_regular = 0
     avg_elapsed_partitioned = 0
     for _ in range(TIME_TRIALS):
-        # Choosing a random centerpoint of a random lane
+        # 从随机车道的中心线上随机选择一点
         position = rng.choice(rng.choice(lanes).points)
         heading = 0
 

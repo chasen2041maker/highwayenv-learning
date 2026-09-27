@@ -1,4 +1,4 @@
-# train and test PPO agent on racetrack-oval-v0 with config
+# 使用指定配置，在 racetrack-oval-v0 中训练和测试 PPO 智能体
 
 import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
@@ -11,7 +11,7 @@ import highway_env  # noqa: F401
 
 TRAIN = True
 
-# env configuration
+# 环境配置
 config = {
     "observation": {
         "type": "OccupancyGrid",
@@ -52,9 +52,9 @@ config = {
     "screen_height": 1000,
     "centering_position": [0.5, 0.5],
     "speed_limit": 10.0,
-    "terminate_off_road": True,  # CL: terminate if car goes off-road
-    "length": 100,  # CL: length of straight; 0: random number form [100,200]
-    "no_lanes": 3,  # CL: no. of lanes; 0: random number form [2,7]
+    "terminate_off_road": True,  # CL：车辆驶出道路时结束
+    "length": 100,  # CL：直道长度；0 表示从 [100,200] 中随机选择
+    "no_lanes": 3,  # CL：车道数量；0 表示从 [2,7] 中随机选择
 }
 
 
@@ -75,13 +75,13 @@ if __name__ == "__main__":
         verbose=2,
         tensorboard_log="racetrack_oval_ppo/",
     )
-    # Train the model
+    # 训练模型
     if TRAIN:
         model.learn(total_timesteps=int(1e3))
         model.save("racetrack_oval_ppo/model")
         del model
 
-    # Run the algorithm
+    # 运行算法
     model = PPO.load("racetrack_oval_ppo/model", env=env)
 
     env = gym.make("racetrack-oval-v0", render_mode="rgb_array", config=config)
@@ -94,10 +94,10 @@ if __name__ == "__main__":
         done = truncated = False
         obs, info = env.reset()
         while not (done or truncated):
-            # Predict
+            # 预测动作
             action, _states = model.predict(obs, deterministic=True)
-            # Get reward
+            # 执行动作并获取奖励
             obs, reward, done, truncated, info = env.step(action)
-            # Render
+            # 渲染
             env.render()
     env.close()

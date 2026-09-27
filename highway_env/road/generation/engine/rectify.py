@@ -20,15 +20,13 @@ def rectify_map(
     disable_prints: bool = False,
 ) -> None:
     """
-    Ensures proximal endpoints have the same string identifier
-    and that intersecting lane paths are properly merged.
-    Also removes defective lanes.
+    确保邻近端点使用相同的字符串标识，并正确合并相交的车道路径。
+    同时移除有缺陷的车道。
 
-    :param lanes: list of lanes
-    :param merge_radius: distance at which an endpoint will join with another
-    endpoint
-    :param forward_speed: agent speed from the swarm generation process
-    :param disable_prints: disables progress and status printing
+    :param lanes: 车道列表
+    :param merge_radius: 两个端点合并的距离阈值
+    :param forward_speed: 群体生成过程中智能体的速度
+    :param disable_prints: 是否关闭进度和状态输出
     """
     rectify_short_lanes(lanes)
     conjoined_nodes = combine_nodes(
@@ -41,7 +39,7 @@ def rectify_map(
         forward_speed=forward_speed,
         disable_prints=disable_prints,
     )
-    rectify_short_lanes(lanes)  # again
+    rectify_short_lanes(lanes)  # 再次执行
     combine_nodes(lanes, merge_radius, disable_prints=disable_prints)
     remove_identical_reference_lanes(lanes)
     prune_intersecting_lanes(lanes, disable_prints=disable_prints)
@@ -49,9 +47,9 @@ def rectify_map(
 
 def rectify_short_lanes(lanes: list[Lane]) -> None:
     """
-    Ensures all lanes are at least 3 points long
+    确保所有车道至少包含 3 个点。
 
-    :param lanes: list of lanes
+    :param lanes: 车道列表
     """
     lanes_to_remove = []
     for lane in lanes:
@@ -73,21 +71,15 @@ def combine_nodes(
     disable_prints: bool = False,
 ) -> None | set[str]:
     """
-    Causes neighboring nodes to coalesce into the same logical
-    intersection with the same identifier
+    将邻近节点合并成使用同一标识的逻辑路口。
 
-    :param lanes: list of lanes
-    :param merge_radius: distance at which an endpoint will join with
-    another endpoint
-    :param mark: if set to true, this will not alter any existing nodes,
-    but instead keeps track of which nodes _would_ be combined. This
-    information (conducted with mark=True) is needed by split_lanes,
-    while the actual merging of nodes (conducted with mark=False) must be performed
-    after split_lanes.
-    :param disable_prints: disables progress and status printing
-
-    :return: if mark is True, returns set of nodes that are proximal to other nodes.
-    if mark is False, returns None
+    :param lanes: 车道列表
+    :param merge_radius: 两个端点合并的距离阈值
+    :param mark: 若为 True，不修改已有节点，只记录哪些节点将被合并。
+        split_lanes 需要 mark=True 时得到的信息；实际的节点合并（mark=False）
+        必须在 split_lanes 之后执行。
+    :param disable_prints: 是否关闭进度和状态输出
+    :return: mark 为 True 时，返回邻近其他节点的节点集合；否则返回 None
     """
 
     lane_to_grid, grid_to_lanes = lanes_spatial_hash(
@@ -97,9 +89,9 @@ def combine_nodes(
     if mark:
         conjoined_nodes = set()
     else:
-        # node_power is used to keep track of
-        # how many times a string identifier
-        # has propagated itself to other proximal nodes
+        # node_power 用来记录
+        # 某个字符串标识已经传播到
+        # 其他邻近节点的次数
         node_power = defaultdict(int)
 
     for lane_id, lane in enumerate(
@@ -110,7 +102,7 @@ def combine_nodes(
         )
         for other_id in sorted(proximal_lanes):
             other_lane = lanes[other_id]
-            # loc = which end of the lane this represents; short for 'location'
+            # loc 是 location 的缩写，表示车道的哪一端
             for loc in ["start", "end"]:
                 for other_loc in ["start", "end"]:
                     p0 = lane.points[Endpoint.l_to_i[loc]]
@@ -119,12 +111,12 @@ def combine_nodes(
                         lane_loc_id = getattr(lane, loc)
                         other_lane_loc_id = getattr(other_lane, other_loc)
                         if mark and lane_loc_id not in conjoined_nodes:
-                            # We need to first ensure that no lane
-                            # runs in between these two proximal nodes
-                            # This can be done by checking if any
-                            # line segment of a lane intersects
-                            # with the line formed by the two proximal
-                            # node positions
+                            # 首先需要确保
+                            # 这两个邻近节点之间没有车道穿过。
+                            # 为此，检查是否存在
+                            # 某条车道的线段
+                            # 与这两个邻近节点
+                            # 之间的连线相交。
                             obstruction_found = False
                             for foreign_id in sorted(proximal_lanes):
                                 foreign_lane = lanes[foreign_id]
@@ -145,19 +137,19 @@ def combine_nodes(
                                         obstruction_found = True
                                         break
 
-                            # If a segment which intersects is found, these
-                            # two nodes would not represent a shared
-                            # junction as they are separated by a road
+                            # 如果发现相交线段，说明
+                            # 两个节点被道路分隔，
+                            # 不能视为同一个路口。
                             if not obstruction_found:
                                 conjoined_nodes.add(lane_loc_id)
                                 conjoined_nodes.add(other_lane_loc_id)
 
                         elif not mark:
-                            # A string identifier with a higher node_power will
-                            # dominate over a node with a lower node_power. this
-                            # 'rich get richer' mechanism prevents situations
-                            # where two conflicting string IDs emerge at the same
-                            # junction
+                            # node_power 较高的字符串标识
+                            # 会覆盖 node_power 较低的节点标识。
+                            # 这种强者更强的机制可以防止
+                            # 同一个路口出现两个
+                            # 相互冲突的字符串标识。
 
                             if node_power[other_lane_loc_id] > node_power[lane_loc_id]:
                                 setattr(lane, loc, other_lane_loc_id)
@@ -178,15 +170,13 @@ def split_lanes(
     disable_prints: bool = False,
 ) -> None:
     """
-    Where there is a lane that 'rams' into another
-    lane, an intersection is made between them.
+    当一条车道接入另一条车道时，在它们之间创建路口。
 
-    :param lanes: list of lanes
-    :param conjoined_nodes: set of nodes that are proximal to other nodes
-    :param merge_radius: distance at which an endpoint will join with another
-    lane
-    :param forward_speed: agent speed from the swarm generation process
-    :param disable_prints: disables progress and status printing
+    :param lanes: 车道列表
+    :param conjoined_nodes: 邻近其他节点的节点集合
+    :param merge_radius: 端点与另一条车道合并的距离阈值
+    :param forward_speed: 群体生成过程中智能体的速度
+    :param disable_prints: 是否关闭进度和状态输出
     """
     cutoff_length = np.ceil(merge_radius * 2.0 / forward_speed)
 
@@ -221,8 +211,8 @@ def split_lanes(
                         found_index = len(other_lane.points) - 2
 
                     lane_loc_id = getattr(lane, loc)
-                    # 'old' means the earlier part of agent history
-                    # / the bottom half of points
+                    # 'old' 表示智能体历史路径中较早的部分
+                    # 即点序列中索引较小的那一部分
                     older_half = other_lane.points[:found_index]
                     old_start = other_lane.start
                     other_lane.points = other_lane.points[found_index:]
@@ -237,9 +227,9 @@ def split_lanes(
 
 def remove_identical_reference_lanes(lanes: list[Lane]) -> None:
     """
-    Removing lanes whose start and end location is the same
+    移除起点和终点位置相同的车道。
 
-    :param lanes: list of lanes
+    :param lanes: 车道列表
     """
     lanes_to_remove = []
     for lane in lanes:
@@ -252,10 +242,10 @@ def remove_identical_reference_lanes(lanes: list[Lane]) -> None:
 
 def prune_intersecting_lanes(lanes: list[Lane], disable_prints: bool = False) -> None:
     """
-    Deleting lanes that cross over each other
+    删除彼此交叉的车道。
 
-    :param lanes: list of lanes
-    :param disable_prints: disables progress and status printing
+    :param lanes: 车道列表
+    :param disable_prints: 是否关闭进度和状态输出
     """
     lane_to_grid, grid_to_lanes = lanes_spatial_hash(
         lanes, gridsize=50, use_boundaries=False

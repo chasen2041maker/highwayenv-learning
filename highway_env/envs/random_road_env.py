@@ -31,12 +31,9 @@ class ParkingSpot(Landmark):
 
 class RandomRoadEnv(AbstractEnv):
     """
-    A navigation, negotiation, and parking environment
-    set on a procedurally generated road network.
+    在程序生成的道路网络上进行导航、通行协商和泊车的环境。
 
-    The goal of an agent is to get to a parking spot
-    as soon as possible without crashing into a curb or
-    other vehicle.
+    智能体的目标是在不撞上路缘或其他车辆的情况下，尽快到达指定停车位。
     """
 
     def __init__(
@@ -46,7 +43,7 @@ class RandomRoadEnv(AbstractEnv):
         self.lanes = []
         self.vehicle_parked = False
 
-        # TODO: remove warning after environment is stable
+        # TODO：环境稳定后移除此警告。
         warnings.warn(
             HighwayEnvExperimentalWarning.template % self.__class__,
             HighwayEnvExperimentalWarning,
@@ -56,23 +53,19 @@ class RandomRoadEnv(AbstractEnv):
     @classmethod
     def default_config(cls) -> dict:
         """
-        - **max_timesteps**: number of policy timesteps before truncation
-        - **curb_collision_reward**: one-time penalty after hitting lane border
-        - **car_collision_reward**: one-time penalty after hitting another vehicle or object
-        - **parking_reward**: one-time reward after parking in the goal parking spot
-        - **parking_score_threshold**: determines the threshold of proximity to be parked
-        - **parking_score_weights**: specifies how much position, velocity, and alignment matter
-        - **route_following_reward_scalar**: determines the reward/penalty gained by traveling
-          towards/away from the next waypoint
-        - **timestep_reward**: step/living penalty
-        - **parking_seed**: pseudorandom seed for determining the
-          placement of parking spots within a generated road network
-        - **generation_params**: custom parameters to be passed for generation
-        - **preloaded_lanes**: prevents generation of a new road network by providing
-          an already existing one
-        - **lane_partition_gridsize**: the size of the grids when partitioning lanes
-          for proximal checks. A lower value can reduce the number of unnecessary checks
-          in dense networks.
+        - **max_timesteps**：达到此决策步数后截断回合。
+        - **curb_collision_reward**：撞到车道边界时的一次性惩罚。
+        - **car_collision_reward**：撞到其他车辆或物体时的一次性惩罚。
+        - **parking_reward**：停入目标停车位时的一次性奖励。
+        - **parking_score_threshold**：判定泊车完成所需的接近程度阈值。
+        - **parking_score_weights**：位置、速度和朝向对齐程度的权重。
+        - **route_following_reward_scalar**：朝向或远离下一个路径点行驶时的奖励或惩罚系数。
+        - **timestep_reward**：每一步的时间惩罚。
+        - **parking_seed**：确定生成道路中停车位位置的伪随机种子。
+        - **generation_params**：传递给生成器的自定义参数。
+        - **preloaded_lanes**：提供已有道路网络，跳过新网络生成。
+        - **lane_partition_gridsize**：将车道划分为空间网格以进行邻近检查时的网格尺寸；
+          较小的值可减少密集路网中不必要的检查。
         """
         config = super().default_config()
         config.update(
@@ -132,14 +125,14 @@ class RandomRoadEnv(AbstractEnv):
 
     def _reward(self, action: Action) -> float:
         """
-        Rewards:
-            * Curb collision penalty
-            * Vehicle-vehicle collision penalty
-            * Parking reward (one-time)
-            * Timestep punishment
-            * Route-following reward
+        奖励组成：
+        - 路缘碰撞惩罚；
+        - 车辆之间的碰撞惩罚；
+        - 一次性泊车奖励；
+        - 每步时间惩罚；
+        - 路线跟随奖励。
         """
-        # Collision
+        # 碰撞
         collided_with_curb = self.detect_object_lane_collision(self.vehicle)
         collided_with_car = self.vehicle.crashed
 
@@ -161,13 +154,13 @@ class RandomRoadEnv(AbstractEnv):
                     self.config["car_collision_reward"] + total_timestep_punishment_left
                 )
 
-        # Parking
+        # 泊车
         parking_score = self.compute_parking_score()
         if parking_score < self.config["parking_score_threshold"]:
             self.vehicle_parked = True
             return self.config["parking_reward"]
 
-        # Route-following
+        # 路线跟随
         reward_earned = self.config["timestep_reward"]
 
         if self.config["route_following_reward_scalar"] != 0:
@@ -195,7 +188,7 @@ class RandomRoadEnv(AbstractEnv):
 
     def _is_terminated(self) -> bool:
         """
-        Termination occurs either by collision or by successfully parking
+        发生碰撞或成功泊车时终止回合。
         """
         return self.vehicle_parked or self.vehicle.crashed
 
@@ -208,9 +201,9 @@ class RandomRoadEnv(AbstractEnv):
         return info
 
     def compute_parking_score(self, p: float = 0.5) -> float:
-        # We do not use our RelativeGoalObservation to compute reward.
-        # Instead we use something similar to compute_reward in ParkingEnv
-        # Lower parking score = better
+        # 计算奖励时不使用 RelativeGoalObservation。
+        # 这里采用类似 ParkingEnv.compute_reward 的方式。
+        # 泊车评分越低越好。
 
         position_diff = np.linalg.norm(
             self.vehicle.position - self.vehicle.goal.position
@@ -218,7 +211,7 @@ class RandomRoadEnv(AbstractEnv):
         velocity_diff = np.linalg.norm(self.vehicle.velocity)
         alignment_penalty = 1 - abs(
             np.cos(self.vehicle.heading - self.vehicle.goal.heading)
-        )  # 0 when perfectly aligned (forward or backward), 1 when sideways
+        )  # 完全对齐（同向或反向）时为 0，横向垂直时为 1。
 
         components = np.array(
             [
@@ -269,18 +262,15 @@ class RandomRoadEnv(AbstractEnv):
         rng: np.random.Generator,
     ) -> bool:
         """
-        :param num_spots: number of parking spots to generate
-        :param spot_width: width of parking spot
-            [must be less than the lane_width]
-        :param spot_height: length of parking spot
-            [must be less than forward_speed]
-        :param rng: random number generator
-        :return: whether or not there was enough space to generate
-            the specified number of spots
+        :param num_spots: 要生成的停车位数量
+        :param spot_width: 停车位宽度，必须小于 lane_width
+        :param spot_height: 停车位长度，必须小于 forward_speed
+        :param rng: 随机数生成器
+        :return: 空间是否足够生成指定数量的停车位
         """
         assert self.road is not None
         curb_spot_offset = 0.1
-        # segment_index: {lane_id, side, pt_id (1-(len-2))}
+        # 路段索引结构：segment_index: {lane_id, side, pt_id (1-(len-2))}
         segment_indices = []
 
         for lane_id, lane in enumerate(self.lanes):
@@ -307,17 +297,17 @@ class RandomRoadEnv(AbstractEnv):
             pt0 = lane_side[pt_id]
             pt1 = lane_side[pt_id + 1]
 
-            # We will attempt to place a parking spot parallel
-            # to our lane segment
+            # 尝试放置一个停车位，
+            # 使其与当前车道路段平行。
 
-            # Requirement 1: This segment must be long enough
-            # to encompass the parking spot
+            # 要求 1：该路段必须足够长，
+            # 能够容纳整个停车位。
             seg_dist = np.linalg.norm(pt0 - pt1)
             if seg_dist < spot_height:
                 segment_indices_i += 1
                 continue
 
-            # Computing geometry for new parking spot
+            # 计算新停车位的几何形状。
             vec = pt1 - pt0
             vec /= np.linalg.norm(vec)
 
@@ -333,16 +323,16 @@ class RandomRoadEnv(AbstractEnv):
             self.road.objects.append(new_parking_spot)
             num_parking_spots += 1
 
-            # Requirement 2: The rectangular parking space should not
-            # intersect with any other lane
+            # 要求 2：矩形停车区域
+            # 不能与其他车道相交。
             if self.detect_object_lane_collision(new_parking_spot):
                 self.road.objects.remove(new_parking_spot)
                 num_parking_spots -= 1
                 segment_indices_i += 1
                 continue
 
-            # Requirement 3: The rectangular parking space should not
-            # intersect with any other already existing parking spot
+            # 要求 3：矩形停车区域
+            # 不能与任何已有停车位相交。
             collision_detected = False
             for other_object in self.road.objects:
                 if other_object is not new_parking_spot:

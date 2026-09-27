@@ -11,7 +11,7 @@ from highway_env.vehicle.uncertainty.prediction import IntervalVehicle, Polytope
 
 
 class RegressionVehicle(IntervalVehicle):
-    """Estimator for the parameter of a LinearVehicle."""
+    """LinearVehicle 的参数估计器。"""
 
     def longitudinal_matrix_polytope(self) -> Polytope:
         return self.polytope_from_estimation(
@@ -72,28 +72,28 @@ class MultipleModelVehicle(LinearVehicle):
         super().act(action)
 
     def collect_data(self) -> None:
-        """Collect the features for each possible route, and true observed outputs."""
+        """收集每条可能路线的特征，以及实际观测到的输出。"""
         for route, data in self.data:
             self.add_features(data, route[0], output_lane=self.target_lane_index)
 
     def update_possible_routes(self) -> None:
         """
-        Update a list of possible routes that this vehicle could be following.
+        更新该车辆可能正在跟随的路线列表。
 
-        - Add routes at the next intersection
-        - Step the current lane in each route
-        - Reject inconsistent routes
+        - 加入下一个路口的路线；
+        - 更新每条路线中当前跟随的车道；
+        - 排除与观测不一致的路线。
         """
 
-        for route in self.get_routes_at_intersection():  # Candidates
-            # Unknown lane -> first lane
+        for route in self.get_routes_at_intersection():  # 候选路线
+            # 车道未知时，使用第一条车道
             for i, lane_index in enumerate(route):
                 route[i] = (
                     lane_index
                     if lane_index[2] is not None
                     else (lane_index[0], lane_index[1], 0)
                 )
-            # Is this route already considered, or a suffix of a route already considered ?
+            # 这条路线是否已经考虑过，或者是已考虑路线的后半段？
             for known_route, _ in self.data:
                 if known_route == route:
                     break
@@ -106,14 +106,14 @@ class MultipleModelVehicle(LinearVehicle):
                     ]
                     break
             else:
-                self.data.append((route.copy(), {}))  # Add it
+                self.data.append((route.copy(), {}))  # 加入这条路线
 
-        # Step the lane being followed in each possible route
+        # 更新每条可能路线中正在跟随的车道
         for route, _ in self.data:
             if self.road.network.get_lane(route[0]).after_end(self.position):
                 route.pop(0)
 
-        # Reject inconsistent hypotheses
+        # 排除与观测不一致的假设
         for route, data in self.data.copy():
             if data:
                 if not is_consistent_dataset(
@@ -123,10 +123,10 @@ class MultipleModelVehicle(LinearVehicle):
 
     def assume_model_is_valid(self, index: int) -> LinearVehicle:
         """
-        Get a copy of this vehicle behaving according to one of its possible routes.
+        获取一个按某条可能路线行驶的车辆副本。
 
-        :param index: index of the route to consider
-        :return: a copy of the vehicle
+        :param index: 要考虑的路线索引
+        :return: 车辆副本
         """
         if not self.data:
             return self.create_from(self)

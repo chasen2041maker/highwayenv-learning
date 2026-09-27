@@ -5,10 +5,10 @@ from .gen_utils import Lane, find_line_intersection, get_radially_sorted_endpoin
 
 def generate_lane_boundaries(lanes: list[Lane], lane_width: int) -> None:
     """
-    Generates lateral left and right boundary points.
+    生成横向的左右边界点。
 
-    :param lanes: list of lanes
-    :param lane_width: intended lane width
+    :param lanes: 车道列表
+    :param lane_width: 期望车道宽度
     """
     for lane in lanes:
         lane.left_points = []
@@ -20,7 +20,7 @@ def generate_lane_boundaries(lanes: list[Lane], lane_width: int) -> None:
                 longitudal_offsets.append(lane.points[i - 1] - point)
             if i != len(lane.points) - 1:
                 longitudal_offsets.append(lane.points[i + 1] - point)
-            # lane.points cannot be of length 1
+            # lane.points 的长度不能为 1
 
             backwards_offset = longitudal_offsets[0].copy()
             if i != 0:
@@ -57,20 +57,19 @@ def generate_lane_boundaries(lanes: list[Lane], lane_width: int) -> None:
 
 def correct_junction_boundaries(lanes: list[Lane], node: str) -> None:
     """
-    Aligns the corner between angularly-adjacent lanes of a junction
-    so that their boundary edges meet at one shared point.
+    对齐路口中按角度相邻车道之间的拐角，使两条边界相交于同一个点。
 
-    :param lanes: list of lanes
-    :param node: string identifier of junction/intersection
+    :param lanes: 车道列表
+    :param node: 路口的字符串标识
     """
     junction = get_radially_sorted_endpoints(lanes, node)
     if len(junction) <= 1:
         return
 
-    # Rule: Your left side should join with your left neighbor's right side
-    # right-hand neighbor: up an index
-    # left-hand neighbor: down an index
-    # Left and right switches depending on which way the lane is oriented
+    # 规则：当前车道左侧应与左邻车道右侧连接
+    # 右侧相邻车道：索引加一
+    # 左侧相邻车道：索引减一
+    # 车道朝向不同时，左右的含义会交换
     for epID, ep in enumerate(junction):
         other_ep = junction[epID - 1]
 
@@ -84,8 +83,8 @@ def correct_junction_boundaries(lanes: list[Lane], node: str) -> None:
         self_side_list = getattr(lanes[ep.id], self_side)
         other_side_list = getattr(lanes[other_ep.id], other_side)
 
-        # Trims boundary points until both points sit behind each
-        # other relative to their own forward directions
+        # 裁剪边界点，直到沿各自前进方向观察时，
+        # 两个点都位于对方的后方
         while True:
             pos = self_side_list[ep.point_index()]
             dir = ep.vector(lanes)
@@ -105,11 +104,11 @@ def correct_junction_boundaries(lanes: list[Lane], node: str) -> None:
             self_side_list.pop(ep.point_index())
             other_side_list.pop(other_ep.point_index())
 
-        # Computing new shared point
+        # 计算新的公共交点
         new_pos = find_line_intersection(pos, dir, other_pos, other_dir)
 
-        # If the new point does not sit in between the two original points,
-        # we instead use a simple average of the two points
+        # 如果新点不在原来两个点之间，
+        # 则改用这两个点的简单平均位置
         b = other_pos - pos
         a = new_pos - pos
 
@@ -124,12 +123,12 @@ def correct_junction_boundaries(lanes: list[Lane], node: str) -> None:
 
 def seal_dead_end(lanes: list[Lane], node: str) -> None:
     """
-    Adds an additional right boundary point to seal off a dead-end junction.
+    添加一个额外的右边界点，封闭死胡同路口。
 
-    :param lanes: list of lanes
-    :param node: string identifier of junction/intersetion
+    :param lanes: 车道列表
+    :param node: 路口的字符串标识
     """
-    # A dead-end is a junction with only one endpoint
+    # 死胡同是仅有一个端点的路口
     junction = get_radially_sorted_endpoints(lanes, node)
     if len(junction) != 1:
         return
@@ -142,8 +141,8 @@ def seal_dead_end(lanes: list[Lane], node: str) -> None:
     else:
         lane.right_points.append(lane.left_points[-1])
 
-    # Shortens the center point value so that it does
-    #  not touch our newly added border segment
+    # 缩短中心点的位置，使其
+    # 不会接触新添加的边界线段
     lane.points[ep.point_index()] = (
         lane.points[ep.point_index()] + lane.points[ep.second_point_index()]
     ) / 2

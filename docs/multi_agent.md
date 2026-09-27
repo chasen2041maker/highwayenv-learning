@@ -19,8 +19,8 @@ To that end, update the {ref}`environment configuration <configuration>` to incr
     "highway-v0",
     render_mode="rgb_array",
     config={
-      "controlled_vehicles": 2,  # Two controlled vehicles
-      "vehicles_count": 1,       # A single other vehicle, for the sake of visualisation
+      "controlled_vehicles": 2,  # 两辆受控车辆
+      "vehicles_count": 1,       # 为便于观察，只放置一辆其他车辆
     }
   )
   env.reset(seed=0)
@@ -56,8 +56,8 @@ The type of actions contained in the tuple must be described by a standard {ref}
   ax1.imshow(env.render())
   ax1.set_title("Initial state")
 
-  # Make the first vehicle change to the left lane, and the second one to the right
-  action_1, action_2 = 0, 2  # See highway_env.envs.common.action.DiscreteMetaAction.ACTIONS_ALL
+  # 让第一辆车向左变道，第二辆车向右变道
+  action_1, action_2 = 0, 2  # 参阅 highway_env.envs.common.action.DiscreteMetaAction.ACTIONS_ALL
   env.step((action_1, action_2))
 
   ax2.imshow(env.render())
@@ -104,7 +104,7 @@ Here is a pseudo-code example of how a centralized multi-agent policy could be t
 .. jupyter-execute::
   :stderr:
 
-  # Multi-agent environment configuration
+  # 多智能体环境配置
   env.unwrapped.config.update({
     "controlled_vehicles": 2,
     "observation": {
@@ -121,10 +121,10 @@ Here is a pseudo-code example of how a centralized multi-agent policy could be t
     }
   })
 
-  # Dummy RL algorithm
+  # 用于示意的强化学习算法
   class Model:
-    """ Dummy code for an RL algorithm, which predicts an action from an observation,
-    and update its model from observed transitions."""
+    """ 强化学习算法的示意代码，根据观察预测动作，
+    并根据观测到的状态转移更新模型。"""
 
     def predict(self, obs):
       return 0
@@ -133,15 +133,15 @@ Here is a pseudo-code example of how a centralized multi-agent policy could be t
       pass
   model = Model()
 
-  # A training episode
+  # 一个训练回合
   obs, info = env.reset()
   done = truncated = False
   while not (done or truncated):
-    # Dispatch the observations to the model to get the tuple of actions
+    # 将观察传给模型，得到动作元组
     action = tuple(model.predict(obs_i) for obs_i in obs)
-    # Execute the actions
+    # 执行动作
     next_obs, reward, done, truncated, info = env.step(action)
-    # Update the model with the transitions observed by each agent
+    # 根据各个智能体观测到的状态转移更新模型
     for obs_i, action_i, next_obs_i in zip(obs, action, next_obs):
       model.update(obs_i, action_i, next_obs_i, reward, info, done, truncated)
     obs = next_obs

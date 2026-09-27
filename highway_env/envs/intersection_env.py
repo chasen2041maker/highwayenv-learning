@@ -60,13 +60,13 @@ class IntersectionEnv(AbstractEnv):
         return config
 
     def _reward(self, action: int) -> float:
-        """Aggregated reward, for cooperative agents."""
+        """合作智能体的汇总奖励。"""
         return sum(
             self._agent_reward(action, vehicle) for vehicle in self.controlled_vehicles
         ) / len(self.controlled_vehicles)
 
     def _rewards(self, action: int) -> dict[str, float]:
-        """Multi-objective rewards, for cooperative agents."""
+        """合作智能体的多目标奖励。"""
         agents_rewards = [
             self._agent_rewards(action, vehicle) for vehicle in self.controlled_vehicles
         ]
@@ -77,7 +77,7 @@ class IntersectionEnv(AbstractEnv):
         }
 
     def _agent_reward(self, action: int, vehicle: Vehicle) -> float:
-        """Per-agent reward signal."""
+        """单个智能体的奖励信号。"""
         rewards = self._agent_rewards(action, vehicle)
         reward = sum(
             self.config.get(name, 0) * reward for name, reward in rewards.items()
@@ -93,7 +93,7 @@ class IntersectionEnv(AbstractEnv):
         return reward
 
     def _agent_rewards(self, action: int, vehicle: Vehicle) -> dict[str, float]:
-        """Per-agent per-objective reward signal."""
+        """单个智能体在各目标上的奖励信号。"""
         scaled_speed = utils.lmap(
             vehicle.speed, self.config["reward_speed_range"], [0, 1]
         )
@@ -112,11 +112,11 @@ class IntersectionEnv(AbstractEnv):
         )
 
     def _agent_is_terminal(self, vehicle: Vehicle) -> bool:
-        """The episode is over when a collision occurs or when the access ramp has been passed."""
+        """发生碰撞或驶过入口匝道时，本回合结束。"""
         return vehicle.crashed or self.has_arrived(vehicle)
 
     def _is_truncated(self) -> bool:
-        """The episode is truncated if the time limit is reached."""
+        """达到时间上限时截断本回合。"""
         return self.time >= self.config["duration"]
 
     def _info(self, obs: np.ndarray, action: int) -> dict:
@@ -141,18 +141,18 @@ class IntersectionEnv(AbstractEnv):
 
     def _make_road(self) -> None:
         """
-        Make an 4-way intersection.
+        创建一个十字交叉路口。
 
-        The horizontal road has the right of way. More precisely, the levels of priority are:
-            - 3 for horizontal straight lanes and right-turns
-            - 1 for vertical straight lanes and right-turns
-            - 2 for horizontal left-turns
-            - 0 for vertical left-turns
+        水平方向道路拥有优先通行权，具体优先级如下：
+        - 水平方向直行和右转：3；
+        - 垂直方向直行和右转：1；
+        - 水平方向左转：2；
+        - 垂直方向左转：0。
 
-        The code for nodes in the road network is:
-        (o:outer | i:inner + [r:right, l:left]) + (0:south | 1:west | 2:north | 3:east)
+        道路网络中的节点编码规则为：
+        (o：外侧 | i：内侧，加上 [r：右侧, l：左侧]) + (0：南 | 1：西 | 2：北 | 3：东)
 
-        :return: the intersection road
+        :return: 交叉路口道路
         """
         lane_width = AbstractLane.DEFAULT_WIDTH
         right_turn_radius = lane_width + 5  # [m}
@@ -169,7 +169,7 @@ class IntersectionEnv(AbstractEnv):
             rotation = np.array(
                 [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]
             )
-            # Incoming
+            # 驶入路口
             start = rotation @ np.array(
                 [lane_width / 2, access_length + outer_distance]
             )
@@ -181,7 +181,7 @@ class IntersectionEnv(AbstractEnv):
                     start, end, line_types=[s, c], priority=priority, speed_limit=10.0
                 ),
             )
-            # Right turn
+            # 右转
             r_center = rotation @ (np.array([outer_distance, outer_distance]))
             net.add_lane(
                 "ir" + str(corner),
@@ -196,7 +196,7 @@ class IntersectionEnv(AbstractEnv):
                     speed_limit=10.0,
                 ),
             )
-            # Left turn
+            # 左转
             l_center = rotation @ (
                 np.array(
                     [
@@ -219,7 +219,7 @@ class IntersectionEnv(AbstractEnv):
                     speed_limit=10.0,
                 ),
             )
-            # Straight
+            # 直行
             start = rotation @ np.array([lane_width / 2, outer_distance])
             end = rotation @ np.array([lane_width / 2, -outer_distance])
             net.add_lane(
@@ -229,7 +229,7 @@ class IntersectionEnv(AbstractEnv):
                     start, end, line_types=[s, n], priority=priority, speed_limit=10.0
                 ),
             )
-            # Exit
+            # 驶出路口
             start = rotation @ np.flip(
                 [lane_width / 2, access_length + outer_distance], axis=0
             )
@@ -254,17 +254,17 @@ class IntersectionEnv(AbstractEnv):
 
     def _make_vehicles(self, n_vehicles: int = 10) -> None:
         """
-        Populate a road with several vehicles on the highway and on the merging lane
+        在高速公路和汇入车道上放置若干车辆。
 
-        :return: the ego-vehicle
+        :return: 自车
         """
-        # Configure vehicles
+        # 配置车辆。
         vehicle_type = utils.class_from_path(self.config["other_vehicles_type"])
-        vehicle_type.DISTANCE_WANTED = 7  # Low jam distance
+        vehicle_type.DISTANCE_WANTED = 7  # 较小的拥堵停车间距
         vehicle_type.COMFORT_ACC_MAX = 6
         vehicle_type.COMFORT_ACC_MIN = -3
 
-        # Random vehicles
+        # 随机车辆
         simulation_steps = 3
         for t in range(n_vehicles - 1):
             self._spawn_vehicle(np.linspace(0, 80, n_vehicles)[t])
@@ -277,7 +277,7 @@ class IntersectionEnv(AbstractEnv):
                 for _ in range(self.config["simulation_frequency"])
             ]
 
-        # Challenger vehicle
+        # 用于增加挑战的车辆
         self._spawn_vehicle(
             60,
             spawn_probability=1.0,
@@ -286,7 +286,7 @@ class IntersectionEnv(AbstractEnv):
             speed_deviation=0.0,
         )
 
-        # Controlled vehicles
+        # 受控车辆
         self.controlled_vehicles = []
         for ego_id in range(0, self.config["controlled_vehicles"]):
             ego_lane = self.road.network.get_lane(
@@ -314,7 +314,7 @@ class IntersectionEnv(AbstractEnv):
 
             self.road.vehicles.append(ego_vehicle)
             self.controlled_vehicles.append(ego_vehicle)
-            for v in self.road.vehicles.copy():  # Prevent early collisions
+            for v in self.road.vehicles.copy():  # 避免刚开始就发生碰撞。
                 if (
                     v not in self.controlled_vehicles
                     and np.linalg.norm(v.position - ego_vehicle.position) < 20

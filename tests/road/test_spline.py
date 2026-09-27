@@ -7,7 +7,7 @@ from highway_env.road.spline import LinearSpline2D, numpy_interp1d
 
 @pytest.fixture
 def simple_data():
-    """Five-point dataset with non-uniform spacing."""
+    """包含五个点、间距不均匀的数据集。"""
     x = np.array([0.0, 1.0, 3.0, 6.0, 10.0])
     y = np.array([2.0, 3.0, 5.0, -1.0, 7.0])
     return x, y
@@ -15,7 +15,7 @@ def simple_data():
 
 @pytest.fixture
 def two_point_data():
-    """Minimal single-segment dataset."""
+    """只包含一个线段的最小数据集。"""
     x = np.array([1.0, 4.0])
     y = np.array([10.0, 25.0])
     return x, y
@@ -26,7 +26,7 @@ def _scipy_ref(x, y):
 
 
 class TestRepresentative:
-    """Representative cases – interior interpolation."""
+    """典型情况：内部插值。"""
 
     def test_exact_knots(self, simple_data):
         x, y = simple_data
@@ -65,7 +65,7 @@ class TestRepresentative:
 
 
 class TestBorderline:
-    """Borderline cases – at / near boundaries."""
+    """边界情况：位于边界上或附近。"""
 
     def test_first_knot(self, simple_data):
         x, y = simple_data
@@ -109,7 +109,7 @@ class TestBorderline:
 
 
 class TestExtreme:
-    """Extreme cases."""
+    """极端情况。"""
 
     def test_large_extrapolation_left(self, simple_data):
         x, y = simple_data
@@ -157,7 +157,7 @@ class TestExtreme:
         np.testing.assert_allclose(f_np(query), f_sp(query))
 
     def test_mixed_extrapolation_array(self, simple_data):
-        """Query array that includes left-extrapolated, interior, and right-extrapolated points."""
+        """查询数组同时包含左侧外推、内部插值和右侧外推的点。"""
         x, y = simple_data
         query = np.array([-5.0, 0.0, 2.0, 5.0, 10.0, 20.0])
         f_np = numpy_interp1d(x, y)
@@ -166,7 +166,7 @@ class TestExtreme:
 
 
 class TestLinearSpline2DIntegration:
-    """Integration test – LinearSpline2D still works after the swap."""
+    """集成测试：替换实现后 LinearSpline2D 仍能正常工作。"""
 
     @pytest.fixture
     def spline(self):

@@ -107,7 +107,7 @@ class ExitEnv(HighwayEnv):
         )
 
     def _create_vehicles(self) -> None:
-        """Create some new random vehicles of a given type, and add them on the road."""
+        """随机创建指定类型的车辆，并将其加入道路。"""
         self.controlled_vehicles = []
         for _ in range(self.config["controlled_vehicles"]):
             vehicle = Vehicle.create_random(
@@ -144,9 +144,9 @@ class ExitEnv(HighwayEnv):
 
     def _reward(self, action: Action) -> float:
         """
-        The reward is defined to foster driving at high speed, on the rightmost lanes, and to avoid collisions.
-        :param action: the last action performed
-        :return: the corresponding reward
+        奖励鼓励车辆高速行驶、靠右行驶并避免碰撞。
+        :param action: 上一次执行的动作
+        :return: 对应的奖励
         """
         reward = sum(
             self.config.get(name, 0) * reward
@@ -191,11 +191,11 @@ class ExitEnv(HighwayEnv):
         return goal_reached
 
     def _is_terminated(self) -> bool:
-        """The episode is over if the ego vehicle crashed."""
+        """自车发生碰撞时，本回合结束。"""
         return self.vehicle.crashed
 
     def _is_truncated(self) -> bool:
-        """The episode is truncated if the time limit is reached."""
+        """达到时间上限时截断本回合。"""
         return self.time >= self.config["duration"]
 
 

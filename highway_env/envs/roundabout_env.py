@@ -75,10 +75,10 @@ class RoundaboutEnv(AbstractEnv):
         self._make_vehicles()
 
     def _make_road(self) -> None:
-        # Circle lanes: (s)outh/(e)ast/(n)orth/(w)est (e)ntry/e(x)it.
+        # 环形车道命名：s/e/n/w 表示南/东/北/西，e/x 表示入口/出口。
         center = [0, 0]  # [m]
         radius = 20  # [m]
-        alpha = 24  # [deg]
+        alpha = 24  # 单位：角度
 
         net = RoadNetwork()
         radii = [radius, radius + 4]
@@ -182,7 +182,7 @@ class RoundaboutEnv(AbstractEnv):
                 ),
             )
 
-        # Access lanes: (r)oad/(s)ine
+        # 连接车道命名：r 表示直线路段，s 表示正弦曲线路段。
         access = 170  # [m]
         dev = 85  # [m]
         a = 5  # [m]
@@ -326,14 +326,14 @@ class RoundaboutEnv(AbstractEnv):
 
     def _make_vehicles(self) -> None:
         """
-        Populate a road with several vehicles on the highway and on the merging lane, as well as an ego-vehicle.
+        在高速公路和汇入车道上放置若干其他车辆及自车。
 
-        :return: the ego-vehicle
+        :return: 自车
         """
         position_deviation = 2.0
         speed_deviation = 2.0
 
-        # Ego-vehicle
+        # 自车
         ego_lane = self.road.network.get_lane(("ser", "ses", 0))
         ego_vehicle = self.action_type.vehicle_class(
             self.road,
@@ -348,7 +348,7 @@ class RoundaboutEnv(AbstractEnv):
         self.road.vehicles.append(ego_vehicle)
         self.vehicle = ego_vehicle
 
-        # Incoming vehicle
+        # 来向车辆
         destinations = ["exr", "sxr", "nxr"]
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
         vehicle = other_vehicles_type.make_on_lane(
@@ -366,7 +366,7 @@ class RoundaboutEnv(AbstractEnv):
         vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Other vehicles
+        # 其他车辆
         for i in list(range(1, 2)) + list(range(-1, 0)):
             vehicle = other_vehicles_type.make_on_lane(
                 self.road,
@@ -379,7 +379,7 @@ class RoundaboutEnv(AbstractEnv):
             vehicle.randomize_behavior()
             self.road.vehicles.append(vehicle)
 
-        # Entering vehicle
+        # 驶入环岛的车辆
         vehicle = other_vehicles_type.make_on_lane(
             self.road,
             ("eer", "ees", 0),
@@ -397,11 +397,10 @@ class ConnectedLaneRoundaboutEnv(ConnectedLaneNeighboursMixin, RoundaboutEnv):
 
 class RoundaboutGenericEnv(RoundaboutEnv):
     """
-    A generic version of the roundabout environment.
-    Additionally supports changing:
-    - the number of lanes in the roundabout
-    - the roundabout radius
-    - the number of spawned other vehicles
+    环岛环境的通用版本，还支持修改：
+    - 环岛车道数量；
+    - 环岛半径；
+    - 生成的其他车辆数量。
     """
 
     @classmethod
@@ -422,7 +421,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
         center = [0, 0]  # [m]
         radius = self.config["roundabout_radius"]
         num_lanes = self.config["roundabout_lanes"]
-        alpha = 24  # [deg]
+        alpha = 24  # 单位：角度
 
         net = RoadNetwork()
         radii = [radius + (4 * i) for i in range(num_lanes)]
@@ -465,7 +464,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
                     ),
                 )
 
-        # Dynamically calculate exact coordinates on the outermost circle
+        # 动态计算最外侧圆周上的精确坐标。
         outer_radius = radii[-1]
 
         def pt(angle_deg: float) -> list[float]:
@@ -481,11 +480,11 @@ class RoundaboutGenericEnv(RoundaboutEnv):
         p_we = pt(180 - alpha)
         p_sx = pt(90 + alpha)
 
-        # In case radius is very large
+        # 处理半径很大的情况。
         dev = max(100.0, 2 * outer_radius + 40.0)
         access = dev + 40.0
 
-        # South Entry (ses -> se)
+        # 南侧入口（ses -> se）
         dy = dev / 2 - p_se[1]
         a = (p_se[0] - 2) / 2
         w = np.pi / dy
@@ -502,7 +501,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             ),
         )
 
-        # South Exit (sx -> sxs)
+        # 南侧出口（sx -> sxs）
         dy = dev / 2 - p_sx[1]
         a = (p_sx[0] + 2) / 2
         w = np.pi / dy
@@ -524,7 +523,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             StraightLane([-2, dev / 2], [-2, access], line_types=(n, c)),
         )
 
-        # East Entry (ees -> ee)
+        # 东侧入口（ees -> ee）
         dx = dev / 2 - p_ee[0]
         a = (-2 - p_ee[1]) / 2
         w = np.pi / dx
@@ -546,7 +545,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             ),
         )
 
-        # East Exit (ex -> exs)
+        # 东侧出口（ex -> exs）
         dx = dev / 2 - p_ex[0]
         a = (2 - p_ex[1]) / 2
         w = np.pi / dx
@@ -568,7 +567,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             StraightLane([dev / 2, 2], [access, 2], line_types=(n, c)),
         )
 
-        # North Entry (nes -> ne)
+        # 北侧入口（nes -> ne）
         dy = p_ne[1] - (-dev / 2)
         a = (-2 - p_ne[0]) / 2
         w = np.pi / dy
@@ -590,7 +589,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             ),
         )
 
-        # North Exit (nx -> nxs)
+        # 北侧出口（nx -> nxs）
         dy = p_nx[1] - (-dev / 2)
         a = (2 - p_nx[0]) / 2
         w = np.pi / dy
@@ -612,7 +611,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             StraightLane([2, -dev / 2], [2, -access], line_types=(n, c)),
         )
 
-        # West Entry (wes -> we)
+        # 西侧入口（wes -> we）
         dx = p_we[0] - (-dev / 2)
         a = (p_we[1] - 2) / 2
         w = np.pi / dx
@@ -629,7 +628,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
             ),
         )
 
-        # West Exit (wx -> wxs)
+        # 西侧出口（wx -> wxs）
         dx = p_wx[0] - (-dev / 2)
         a = (p_wx[1] + 2) / 2
         w = np.pi / dx
@@ -669,7 +668,7 @@ class RoundaboutGenericEnv(RoundaboutEnv):
 
         ego_lane_id = ("ser", "ses", 0)
         ego_lane = self.road.network.get_lane(ego_lane_id)
-        ego_longitudinal = ego_lane.length - 2.5  # Placed at end of straight lane
+        ego_longitudinal = ego_lane.length - 2.5  # 放置在直线车道末端。
 
         ego_vehicle = self.action_type.vehicle_class(
             self.road,
@@ -699,8 +698,8 @@ class RoundaboutGenericEnv(RoundaboutEnv):
 
         spawned_points = []
         spawned_points.append(ego_lane.position(ego_longitudinal, 0.0))
-        safe_distance = 7.0  # safe distance to spawn vehicles from each other
-        tries = 10  # number of times it tries to spawn a vehicle
+        safe_distance = 7.0  # 车辆生成时彼此之间的安全间距。
+        tries = 10  # 尝试生成一辆车的次数。
         for _ in range(vehicle_count):
             for _ in range(tries):
                 lane_tuple = spawn_lanes[self.np_random.integers(0, len(spawn_lanes))]

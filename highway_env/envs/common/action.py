@@ -17,52 +17,53 @@ from highway_env.vehicle.kinematics import Vehicle
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
 
-Action = Union[int, np.ndarray]
+Action = Union[int, np.ndarray] #union 两种类型中的一个
 
 
 class ActionType:
-    """A type of action specifies its definition space, and how actions are executed in the environment"""
+    """动作类型：规定动作空间，以及动作在环境中如何执行。"""
 
     def __init__(self, env: AbstractEnv, **kwargs) -> None:
         self.env = env
         self.__controlled_vehicle = None
 
     def space(self) -> spaces.Space:
-        """The action space."""
+        """动作空间。"""
         raise NotImplementedError
 
     @property
     def vehicle_class(self) -> Callable:
         """
-        The class of a vehicle able to execute the action.
+        能够执行此类动作的车辆类。
 
-        Must return a subclass of :py:class:`highway_env.vehicle.kinematics.Vehicle`.
+        必须返回 :py:class:`highway_env.vehicle.kinematics.Vehicle` 的子类。
         """
         raise NotImplementedError
 
     def act(self, action: Action) -> None:
         """
-        Execute the action on the ego-vehicle.
+        在自车上执行动作。
 
-        Most of the action mechanics are actually implemented in vehicle.act(action), where
-        vehicle is an instance of the specified :py:class:`highway_env.envs.common.action.ActionType.vehicle_class`.
-        Must some pre-processing can be applied to the action based on the ActionType configurations.
+        动作的具体执行主要由 vehicle.act(action) 完成，其中 vehicle 是
+        :py:class:`highway_env.envs.common.action.ActionType.vehicle_class` 指定车辆类的实例。
+        还可以根据 ActionType 的配置，对动作进行预处理。
 
-        :param action: the action to execute
+        :param action: 要执行的动作
         """
         raise NotImplementedError
 
     def get_available_actions(self):
         """
-        For discrete action space, return the list of available actions.
+        对于离散动作空间，返回可用动作列表。
         """
         raise NotImplementedError
 
     @property
     def controlled_vehicle(self):
-        """The vehicle acted upon.
+        """接受动作控制的车辆。
 
-        If not set, the first controlled vehicle is used by default."""
+        若未单独设置，默认使用第一辆受控车辆。
+        """
         return self.__controlled_vehicle or self.env.vehicle
 
     @controlled_vehicle.setter
@@ -72,18 +73,18 @@ class ActionType:
 
 class ContinuousAction(ActionType):
     """
-    An continuous action space for throttle and/or steering angle.
+    用于油门和/或转向角的连续动作空间。
 
-    If both throttle and steering are enabled, they are set in this order: [throttle, steering]
+    若同时启用油门和转向，输入顺序为 [throttle, steering]。
 
-    The space intervals are always [-1, 1], but are mapped to throttle/steering intervals through configurations.
+    动作值始终位于 [-1, 1]，随后按配置映射到油门和转向的实际范围。
     """
 
     ACCELERATION_RANGE = (-5, 5.0)
-    """Acceleration range: [-x, x], in m/s²."""
+    """加速度范围：[-x, x]，单位为 m/s²。"""
 
     STEERING_RANGE = (-np.pi / 4, np.pi / 4)
-    """Steering angle range: [-x, x], in rad."""
+    """转向角范围：[-x, x]，单位为弧度。"""
 
     def __init__(
         self,
@@ -98,16 +99,16 @@ class ContinuousAction(ActionType):
         **kwargs,
     ) -> None:
         """
-        Create a continuous action space.
+        创建连续动作空间。
 
-        :param env: the environment
-        :param acceleration_range: the range of acceleration values [m/s²]
-        :param steering_range: the range of steering values [rad]
-        :param speed_range: the range of reachable speeds [m/s]
-        :param longitudinal: enable throttle control
-        :param lateral: enable steering control
-        :param dynamical: whether to simulate dynamics (i.e. friction) rather than kinematics
-        :param clip: clip action to the defined range
+        :param env: 所属环境
+        :param acceleration_range: 加速度取值范围，单位为 m/s²
+        :param steering_range: 转向角取值范围，单位为弧度
+        :param speed_range: 可达到的速度范围，单位为 m/s
+        :param longitudinal: 是否启用纵向油门控制
+        :param lateral: 是否启用横向转向控制
+        :param dynamical: 是否使用包含摩擦等因素的动力学模型，而非运动学模型
+        :param clip: 是否将动作裁剪到规定范围
         """
         super().__init__(env)
         self.acceleration_range = (
@@ -198,17 +199,17 @@ class DiscreteAction(ContinuousAction):
 
 class DiscreteMetaAction(ActionType):
     """
-    An discrete action space of meta-actions: lane changes, and cruise control set-point.
+    由变道和巡航目标速度调整等高层指令组成的离散动作空间。
     """
 
     ACTIONS_ALL = {0: "LANE_LEFT", 1: "IDLE", 2: "LANE_RIGHT", 3: "FASTER", 4: "SLOWER"}
-    """A mapping of action indexes to labels."""
+    """动作编号与动作名称的对应关系。"""
 
     ACTIONS_LONGI = {0: "SLOWER", 1: "IDLE", 2: "FASTER"}
-    """A mapping of longitudinal action indexes to labels."""
+    """纵向动作编号与动作名称的对应关系。"""
 
     ACTIONS_LAT = {0: "LANE_LEFT", 1: "IDLE", 2: "LANE_RIGHT"}
-    """A mapping of lateral action indexes to labels."""
+    """横向动作编号与动作名称的对应关系。"""
 
     def __init__(
         self,
@@ -219,12 +220,12 @@ class DiscreteMetaAction(ActionType):
         **kwargs,
     ) -> None:
         """
-        Create a discrete action space of meta-actions.
+        创建由高层指令组成的离散动作空间。
 
-        :param env: the environment
-        :param longitudinal: include longitudinal actions
-        :param lateral: include lateral actions
-        :param target_speeds: the list of speeds the vehicle is able to track
+        :param env: 所属环境
+        :param longitudinal: 是否包含纵向动作
+        :param lateral: 是否包含横向动作
+        :param target_speeds: 车辆可以跟踪的目标速度列表
         """
         super().__init__(env)
         self.longitudinal = longitudinal
@@ -261,12 +262,12 @@ class DiscreteMetaAction(ActionType):
 
     def get_available_actions(self) -> list[int]:
         """
-        Get the list of currently available actions.
+        获取当前可用的动作列表。
 
-        Lane changes are not available on the boundary of the road, and speed changes are not available at
-        maximal or minimal speed.
+        位于道路边界时，不能继续向道路外侧变道；
+        已达到最高或最低速度时，不能继续向相应方向调整速度。
 
-        :return: the list of available actions
+        :return: 可用动作列表
         """
         actions = [self.actions_indexes["IDLE"]]
         network = self.controlled_vehicle.road.network

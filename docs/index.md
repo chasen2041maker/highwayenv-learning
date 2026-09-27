@@ -25,20 +25,20 @@ import highway_env
 
 gym.register_envs(highway_env)
 
-# Initialise the environment
+# 初始化环境
 env = gym.make("highway-v0", config={"lanes_count": 3}, render_mode="human")
 
-# Reset the environment to generate the first observation
+# 重置环境，生成第一次观察
 obs, info = env.reset()
 for _ in range(1000):
-    # this is where you would insert your policy
+    # 在这里加入你的驾驶策略
     action = env.action_space.sample()
 
-    # step (transition) through the environment with the action
-    # receiving the next observation, reward and if the episode has terminated or truncated
+    # 用选定动作推进环境一步，
+    # 获取下一次观察、奖励，以及回合是否终止或截断
     obs, reward, terminated, truncated, info = env.step(action)
 
-    # If the episode has ended then we can reset to start a new episode
+    # 如果本局已结束，则重置环境开始新一局
     if terminated or truncated:
         obs, info = env.reset()
 

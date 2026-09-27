@@ -1,20 +1,20 @@
-# Configuration file for the Sphinx documentation builder.
+# Sphinx 文档构建器的配置文件。
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# 本文件只包含部分常用选项。完整选项列表
+# 请参阅文档：
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+# -- 路径设置 --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+# 如果扩展模块或需要 autodoc 生成文档的模块位于其他目录，
+# 请在这里将其目录加入 sys.path。若路径相对于文档根目录，
+# 可像下面的示例一样，使用 os.path.abspath 将其转换为绝对路径。
 #
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# -- Project information -----------------------------------------------------
+# -- 项目信息 -----------------------------------------------------
 import os
 from typing import Any, Dict
 
@@ -25,15 +25,15 @@ project = "HighwayEnv"
 copyright = "2023 Farama Foundation"
 author = "Farama Foundation"
 
-# The full version, including alpha/beta/rc tags
+# 完整版本号，包含 alpha、beta、rc 标签
 # release = highway_env.__version__
 release = ""
 
-# -- General configuration ---------------------------------------------------
+# -- 常规配置 ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# 在这里以字符串形式添加 Sphinx 扩展模块名称。
+# 可以使用 Sphinx 自带的扩展（名称为 'sphinx.ext.*'），
+# 也可以使用自定义扩展。
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.coverage",
@@ -56,36 +56,36 @@ autodoc_default_flags = [
 ]
 autodoc_member_order = "bysource"
 
-# Add any paths that contain templates here, relative to this directory.
+# 在这里添加包含模板的路径，路径相对于当前目录。
 templates_path = ["_templates"]
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path .
+# 匹配需要忽略的文件和目录的模式列表，
+# 查找源文件时使用，路径相对于源目录。
+# 这些模式也会影响 html_static_path 和 html_extra_path。
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-# Napoleon settings
+# Napoleon 扩展设置
 # napoleon_use_ivar = True
 napoleon_use_admonition_for_references = True
-# See https://github.com/sphinx-doc/sphinx/issues/9119
+# 参考 https://github.com/sphinx-doc/sphinx/issues/9119
 napoleon_custom_sections = [("Returns", "params_style")]
 
-# Autodoc
+# Autodoc 自动生成文档设置
 autoclass_content = "both"
 autodoc_preserve_defaults = True
 
-# -- Auto Section Label configuration ----------------------------------------
+# -- 自动章节标签配置 ----------------------------------------
 autosectionlabel_prefix_document = True
 
-# -- MyST configuration -----------------------------------------------------
+# -- MyST 配置 -----------------------------------------------------
 myst_enable_extensions = [
     "dollarmath",
 ]
 
-# -- Options for HTML output -------------------------------------------------
+# -- HTML 输出选项 -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# 用于 HTML 和 HTML 帮助页面的主题。
+# 内置主题列表请参阅文档。
 #
 html_theme = "celshast"
 html_title = "HighwayEnv Documentation"
@@ -115,12 +115,12 @@ html_static_path = ["_static"]
 html_css_files = []
 
 
-# -- BibTeX -------------------------------------------------------------
+# -- BibTeX 参考文献设置 -------------------------------------------------------------
 
 bibtex_bibfiles = ["bibliography/biblio.bib"]
 bibtex_encoding = "latin"
 bibtex_default_style = "alpha"
 
-# -- Generate Changelog -------------------------------------------------
+# -- 生成更新日志 -------------------------------------------------
 
 sphinx_github_changelog_token = os.environ.get("SPHINX_GITHUB_CHANGELOG_TOKEN")

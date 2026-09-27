@@ -35,8 +35,8 @@ def test_observation_type(observation_config):
 
 
 def test_occupancy_grid_shape_no_uint8_overflow():
-    # Regression: grid_shape was cast to uint8 and silently wrapped
-    # (mod 256) for grids with more than 255 cells along an axis.
+    # 回归测试：此前 grid_shape 转换为 uint8 后，对于某轴超过 255 个单元的网格，
+    # 会悄悄发生回绕，相当于对 256 取模。
     config = {
         "observation": {
             "type": "OccupancyGrid",
@@ -46,15 +46,15 @@ def test_occupancy_grid_shape_no_uint8_overflow():
     }
     env = gym.make("highway-v0", config=config)
     obs, _ = env.reset()
-    # 4 default features (presence, vx, vy, on_road) x 300 x 10 cells
+    # 4 个默认特征（presence、vx、vy、on_road）× 300 × 10 个单元
     assert env.observation_space.shape == (4, 300, 10)
     assert obs.shape == (4, 300, 10)
     env.close()
 
 
 def test_kinematics_vehicles_count_one():
-    # Regression: vehicles_count=1 requests zero neighbours, but a count of
-    # zero was treated as "no limit" and every nearby vehicle was returned.
+    # 回归测试：vehicles_count=1 表示不需要邻车，但此前数量为 0
+    # 被当作“不限制数量”，导致返回全部附近车辆。
     config = {"observation": {"type": "Kinematics", "vehicles_count": 1}}
     env = gym.make("highway-v0", config=config)
     obs, _ = env.reset(seed=0)

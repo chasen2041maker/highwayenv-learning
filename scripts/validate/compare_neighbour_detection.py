@@ -1,10 +1,10 @@
 """
-Side-by-side pygame visualization of legacy vs connected-lane neighbour search.
+使用 pygame 并排展示旧版邻车搜索与跨相连车道段搜索的区别。
 
-Shows how connected-lane neighbour detection differs when the ego vehicle
-is on one lane segment and a neighbour is on an adjacent connected segment.
+自车位于一个车道段、邻车位于相邻且连通的另一车道段时，
+展示两种邻车检测方法的不同表现。
 
-Run:
+运行示例：
     python scripts/validate/compare_neighbour_detection.py
     python scripts/validate/compare_neighbour_detection.py --env racetrack
     python scripts/validate/compare_neighbour_detection.py --env intersection --no-patch
@@ -29,7 +29,7 @@ from highway_env.vehicle import kinematics
 from highway_env.vehicle.objects import Landmark, LaneIndex
 
 
-# Legacy (v0) and connected-lane env IDs; intersection uses v2 (v1 is continuous-action).
+# 旧版（v0）和支持跨相连车道段搜索的环境编号；intersection 使用 v2，v1 是连续动作版。
 ENV_VERSIONS = {
     "exit": ("exit-v0", "exit-v1"),
     "merge": ("merge-v0", "merge-v1"),
@@ -74,7 +74,7 @@ _should_update_seed: ContextVar[bool] = ContextVar("update_seed")
 
 
 class DualEnvReplay:
-    """Keep both env panels in sync and support stepping, rewinding, and looping."""
+    """保持两个环境面板同步，支持逐步播放、倒退和循环。"""
 
     def __init__(
         self,
@@ -329,13 +329,12 @@ def original_neighbour_vehicles(
     lane_index: LaneIndex = None,
 ) -> tuple[kinematics.Vehicle | None, kinematics.Vehicle | None]:
     """
-    Find the preceding and following vehicles of a given vehicle.
+    查找给定车辆的前车和后车。
 
-    :param vehicle: the vehicle whose neighbours must be found
-    :param lane_index: the lane on which to look for preceding and following vehicles.
-                    It doesn't have to be the current vehicle lane but can also be another lane, in which case the
-                    vehicle is projected on it considering its local coordinates in the lane.
-    :return: its preceding vehicle, its following vehicle
+    :param vehicle: 需要查找邻车的车辆
+    :param lane_index: 查找前后车辆的车道；不必是车辆当前所在车道。
+        若使用其他车道，则根据车辆在该车道中的局部坐标进行投影。
+    :return: 前车和后车
     """
     lane_index = lane_index or vehicle.lane_index
     if not lane_index:
@@ -362,7 +361,7 @@ def original_neighbour_vehicles(
 
 
 def patch_original_neighbour_vehicles(road: Road) -> None:
-    """Replace Road.neighbour_vehicles with the pre-PR-667 implementation."""
+    """将 Road.neighbour_vehicles 替换为 PR #667 之前的实现。"""
     road.neighbour_vehicles = types.MethodType(original_neighbour_vehicles, road)
     setattr(road, "_uses_original_neighbour_vehicles", True)
 
@@ -400,7 +399,7 @@ def _draw_dashed_line(
     dash_length: int = 8,
     gap_length: int = 5,
 ) -> None:
-    """Draw a dashed line between two pixel coordinates."""
+    """在两个像素坐标之间绘制虚线。"""
     (x0, y0), (x1, y1) = start, end
     dx, dy = x1 - x0, y1 - y0
     distance = max(math.sqrt(dx * dx + dy * dy), 1.0)
@@ -429,7 +428,7 @@ def _draw_segment_boundaries(
     road: Road,
     font: pygame.font.Font | None = None,
 ) -> None:
-    """Draw perpendicular dashed lines at lane segment ends (road-network nodes)."""
+    """在车道段末端（道路网络节点）绘制垂直虚线。"""
     labeled_nodes: set[str] = set()
 
     for _from, to_dict in road.network.graph.items():
@@ -467,7 +466,7 @@ def _vehicle_label(vehicle) -> str:
 
 
 def _has_same_segment_vehicle(road, ego, direction: str) -> bool:
-    """Whether any vehicle sits ahead/behind ego on the current lane segment."""
+    """判断当前车道段上自车前方或后方是否存在车辆。"""
     if ego is None or not ego.lane_index:
         return False
 
@@ -487,7 +486,7 @@ def _has_same_segment_vehicle(road, ego, direction: str) -> bool:
 
 
 def _reference_neighbours(road, ego):
-    """Front/rear as returned by the library connected-lane implementation."""
+    """获取库中跨相连车道段搜索实现返回的前车和后车。"""
     enabled = road.neighbour_vehicles_connected_lanes
     road.neighbour_vehicles_connected_lanes = True
     try:
@@ -497,7 +496,7 @@ def _reference_neighbours(road, ego):
 
 
 def _find_connected_lane_vehicle(road, ego, direction: str = "front"):
-    """Return the closest vehicle on a directly connected next/previous lane segment."""
+    """返回直接相连的前一段或后一段车道上最近的车辆。"""
     if ego is None or not ego.lane_index:
         return None
 
@@ -554,7 +553,7 @@ def _find_connected_lane_vehicle(road, ego, direction: str = "front"):
 
 
 def _missed_connected_neighbour(road, ego, detected, reference, direction: str) -> bool:
-    """True when connected-lane search finds a neighbour that was not detected."""
+    """跨相连车道段搜索发现原方法未检测到的邻车时，返回 True。"""
     if reference is None or reference is detected:
         return False
     if ego is None:
@@ -570,7 +569,7 @@ def _draw_missed_neighbour_cue(
     vehicle,
     color: tuple[int, int, int],
 ) -> None:
-    """Draw a dashed line and ring highlighting an undetected connected-lane neighbour."""
+    """通过虚线和圆环突出显示原方法未检测到的相连车道段邻车。"""
     ego_pix = surface.vec2pix(ego.position)
     target_pix = surface.vec2pix(vehicle.position)
     _draw_dashed_line(
@@ -580,7 +579,7 @@ def _draw_missed_neighbour_cue(
 
 
 def _draw_neighbour_overlay(surface: WorldSurface, road, ego) -> dict:
-    """Draw neighbour-detection lines and return status for the HUD."""
+    """绘制邻车检测连线，并返回供屏幕状态栏显示的状态。"""
     front, rear = road.neighbour_vehicles(ego)
     ref_front, ref_rear = _reference_neighbours(road, ego)
     connected_front = _find_connected_lane_vehicle(road, ego, "front")
@@ -641,7 +640,7 @@ def _draw_legend_swatches(
     font: pygame.font.Font,
     muted: tuple[int, int, int],
 ) -> int:
-    """Draw a row of colour swatches; return x after the last item."""
+    """绘制一排颜色样例，并返回最后一项之后的 x 坐标。"""
     for color, dashed, label in items:
         if dashed and color in (MISSED_FRONT_COLOR, MISSED_REAR_COLOR):
             for offset in range(0, 18, 4):
@@ -730,7 +729,7 @@ def _draw_footer(
     y: int,
     loop_text: str,
 ) -> None:
-    """Draw playback status, colour legend, and controls at the bottom."""
+    """在底部绘制播放状态、颜色图例和控制说明。"""
     muted = (180, 180, 180)
     screen.blit(font.render(loop_text, True, muted), (12, y + 4))
 

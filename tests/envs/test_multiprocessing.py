@@ -1,14 +1,13 @@
-"""Test that highway-env environments work with multiprocessing (forkserver/spawn).
+"""测试 highway-env 环境能否在多进程模式（forkserver/spawn）下工作。
 
-When using SubprocVecEnv from stable-baselines3 or similar vectorized
-environment wrappers, child processes are started via ``forkserver`` or
-``spawn`` and do **not** inherit the parent's ``import highway_env``.
+使用 stable-baselines3 的 SubprocVecEnv 或类似的向量化环境包装器时，
+子进程通过 ``forkserver`` 或 ``spawn`` 启动，**不会**继承父进程的
+``import highway_env`` 操作。
 
-Gymnasium's ``module:env_name`` syntax (e.g. ``"highway_env:highway-v0"``)
-triggers an import of the module in the subprocess, which registers the
-environments on demand.
+Gymnasium 的 ``module:env_name`` 语法，例如 ``"highway_env:highway-v0"``，
+会在子进程中触发模块导入，从而按需注册环境。
 
-See: https://github.com/Farama-Foundation/HighwayEnv/issues/648
+参考：https://github.com/Farama-Foundation/HighwayEnv/issues/648
 """
 
 import multiprocessing as mp
@@ -18,7 +17,7 @@ import pytest
 
 
 def _make_env_in_subprocess(env_id: str, result_queue: mp.Queue) -> None:
-    """Create and step an environment inside a subprocess (no prior import of highway_env)."""
+    """在子进程中创建环境并推进一步，事先不导入 highway_env。"""
     try:
         env = gym.make(env_id)
         obs, _info = env.reset()
@@ -44,7 +43,7 @@ def _make_env_in_subprocess(env_id: str, result_queue: mp.Queue) -> None:
 )
 @pytest.mark.parametrize("start_method", ["forkserver", "spawn"])
 def test_env_in_subprocess(env_id: str, start_method: str) -> None:
-    """Environments should be creatable in forkserver/spawn subprocesses via module:name syntax."""
+    """使用 module:name 语法，应能在 forkserver/spawn 子进程中创建环境。"""
     if start_method not in mp.get_all_start_methods():
         pytest.skip(f"{start_method} not available on this platform")
 

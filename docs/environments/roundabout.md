@@ -55,12 +55,12 @@ See {ref}`road-neighbour-vehicles` for details.
     "right_lane_reward": 0,
     "lane_change_reward": -0.05,
     "normalize_reward": True,
-    "duration": 11,  # [s]
-    "simulation_frequency": 15,  # [Hz]
-    "policy_frequency": 1,  # [Hz]
+    "duration": 11,  # 单位：秒
+    "simulation_frequency": 15,  # 单位：赫兹
+    "policy_frequency": 1,  # 单位：赫兹
     "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
-    "screen_width": 600,  # [px]
-    "screen_height": 600,  # [px]
+    "screen_width": 600,  # 单位：像素
+    "screen_height": 600,  # 单位：像素
     "centering_position": [0.5, 0.6],
     "scaling": 5.5,
     "show_trajectories": False,

@@ -23,7 +23,7 @@ env.reset(seed=None, options={"config": config})
 
 throttle_speed = 0.01
 steer_speed = 0.5
-rolling_friction = 0.001  # rolling friction + air resistance + engine braking
+rolling_friction = 0.001  # 滚动摩擦 + 空气阻力 + 发动机制动
 break_multiplier = 3
 
 
@@ -47,7 +47,7 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    # Car control #
+    # 车辆控制 #
     throttle = 0
     steer = 0
     if keys[pygame.K_w]:
@@ -59,7 +59,7 @@ while running:
     if keys[pygame.K_d]:
         steer += steer_speed
 
-    if throttle * env.unwrapped.vehicle.speed < 0:  # Simulating 'breaking'
+    if throttle * env.unwrapped.vehicle.speed < 0:  # 模拟制动
         throttle *= break_multiplier
 
     acceleration = throttle - rolling_friction * env.unwrapped.vehicle.speed

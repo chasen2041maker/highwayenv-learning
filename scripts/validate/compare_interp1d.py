@@ -1,4 +1,4 @@
-"""Benchmark: numpy_interp1d vs scipy.interpolate.interp1d(fill_value="extrapolate")."""
+"""基准测试：比较 numpy_interp1d 与 scipy.interpolate.interp1d(fill_value="extrapolate")。"""
 
 import timeit
 
@@ -26,7 +26,7 @@ def _make_query(n: int, x: np.ndarray, rng: np.random.Generator):
 
 
 def bench_construction():
-    """Constructor check: is numpy_interp1d fast enough to construct."""
+    """构造性能检查：numpy_interp1d 的创建速度是否足够快。"""
     rng = np.random.default_rng(BENCHMARK_SEED)
     print("=" * 72)
     print("CONSTRUCTION TIME (build the interpolator)")
@@ -50,7 +50,7 @@ def bench_construction():
 
 
 def bench_evaluation():
-    """Evaluation check: is numpy_interp1d fast enough in evaluation."""
+    """求值性能检查：numpy_interp1d 的计算速度是否足够快。"""
     rng = np.random.default_rng(BENCHMARK_SEED)
     print()
     print("=" * 72)
@@ -78,7 +78,7 @@ def bench_evaluation():
 
 
 def validate_correctness():
-    """Sanify check: are they equivalent."""
+    """基本正确性检查：两者的结果是否等价。"""
     rng = np.random.default_rng(BENCHMARK_SEED)
     print()
     print("=" * 72)

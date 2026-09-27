@@ -10,7 +10,7 @@ from typing import Any, Callable, List, Mapping, Sequence, Tuple, Union
 import numpy as np
 
 
-# Useful types
+# 常用类型
 Vector = Union[np.ndarray, Sequence[float]]
 ColumnVector = Matrix = Union[np.ndarray, Sequence[Sequence[float]]]
 Interval = Union[
@@ -29,7 +29,7 @@ def do_every(duration: float, timer: float) -> bool:
 
 
 def lmap(v: float, x: Interval, y: Interval) -> float:
-    """Linear map of value v with range x to desired range y."""
+    """将取值范围为 x 的数值 v，线性映射到目标范围 y。"""
     return y[0] + (v - x[0]) * (y[1] - y[0]) / (x[1] - x[0])
 
 
@@ -62,11 +62,11 @@ def wrap_to_pi(x: float) -> float:
 
 def point_in_rectangle(point: Vector, rect_min: Vector, rect_max: Vector) -> bool:
     """
-    Check if a point is inside a rectangle
+    检查点是否位于矩形内部。
 
-    :param point: a point (x, y)
-    :param rect_min: x_min, y_min
-    :param rect_max: x_max, y_max
+    :param point: 点 (x, y)
+    :param rect_min: 矩形的最小坐标 x_min, y_min
+    :param rect_max: 矩形的最大坐标 x_max, y_max
     """
     return (
         rect_min[0] <= point[0] <= rect_max[0]
@@ -78,14 +78,14 @@ def point_in_rotated_rectangle(
     point: np.ndarray, center: np.ndarray, length: float, width: float, angle: float
 ) -> bool:
     """
-    Check if a point is inside a rotated rectangle
+    检查点是否位于旋转后的矩形内部。
 
-    :param point: a point
-    :param center: rectangle center
-    :param length: rectangle length
-    :param width: rectangle width
-    :param angle: rectangle angle [rad]
-    :return: is the point inside the rectangle
+    :param point: 点
+    :param center: 矩形中心
+    :param length: 矩形长度
+    :param width: 矩形宽度
+    :param angle: 矩形角度，单位为弧度
+    :return: 点是否位于矩形内部
     """
     c, s = np.cos(angle), np.sin(angle)
     r = np.array([[c, -s], [s, c]])
@@ -97,14 +97,14 @@ def point_in_ellipse(
     point: Vector, center: Vector, angle: float, length: float, width: float
 ) -> bool:
     """
-    Check if a point is inside an ellipse
+    检查点是否位于椭圆内部。
 
-    :param point: a point
-    :param center: ellipse center
-    :param angle: ellipse main axis angle
-    :param length: ellipse big axis
-    :param width: ellipse small axis
-    :return: is the point inside the ellipse
+    :param point: 点
+    :param center: 椭圆中心
+    :param angle: 椭圆主轴角度
+    :param length: 椭圆长轴
+    :param width: 椭圆短轴
+    :return: 点是否位于椭圆内部
     """
     c, s = np.cos(angle), np.sin(angle)
     r = np.matrix([[c, -s], [s, c]])
@@ -116,11 +116,11 @@ def rotated_rectangles_intersect(
     rect1: tuple[Vector, float, float, float], rect2: tuple[Vector, float, float, float]
 ) -> bool:
     """
-    Do two rotated rectangles intersect?
+    判断两个旋转矩形是否相交。
 
-    :param rect1: (center, length, width, angle)
-    :param rect2: (center, length, width, angle)
-    :return: do they?
+    :param rect1: 第一个矩形 (center, length, width, angle)
+    :param rect2: 第二个矩形 (center, length, width, angle)
+    :return: 两个矩形是否相交
     """
     return has_corner_inside(rect1, rect2) or has_corner_inside(rect2, rect1)
 
@@ -134,14 +134,15 @@ def rect_corners(
     include_center: bool = False,
 ) -> list[np.ndarray]:
     """
-    Returns the positions of the corners of a rectangle.
-    :param center: the rectangle center
-    :param length: the rectangle length
-    :param width: the rectangle width
-    :param angle: the rectangle angle
-    :param include_midpoints: include middle of edges
-    :param include_center: include the center of the rect
-    :return: a list of positions
+    返回矩形各个角点的位置。
+
+    :param center: 矩形中心
+    :param length: 矩形长度
+    :param width: 矩形宽度
+    :param angle: 矩形角度
+    :param include_midpoints: 是否包含各边的中点
+    :param include_center: 是否包含矩形中心
+    :return: 位置列表
     """
     center = np.array(center)
     half_l = np.array([length / 2, 0])
@@ -161,10 +162,10 @@ def has_corner_inside(
     rect1: tuple[Vector, float, float, float], rect2: tuple[Vector, float, float, float]
 ) -> bool:
     """
-    Check if rect1 has a corner inside rect2
+    检查 rect1 是否有角点位于 rect2 内部。
 
-    :param rect1: (center, length, width, angle)
-    :param rect2: (center, length, width, angle)
+    :param rect1: 第一个矩形 (center, length, width, angle)
+    :param rect2: 第二个矩形 (center, length, width, angle)
     """
     return any(
         [
@@ -187,8 +188,8 @@ def project_polygon(polygon: Vector, axis: Vector) -> tuple[float, float]:
 
 def interval_distance(min_a: float, max_a: float, min_b: float, max_b: float):
     """
-    Calculate the distance between [minA, maxA] and [minB, maxB]
-    The distance will be negative if the intervals overlap
+    计算区间 [minA, maxA] 与 [minB, maxB] 之间的距离。
+    如果两个区间重叠，距离为负。
     """
     return min_b - max_a if min_a < min_b else min_a - max_b
 
@@ -197,15 +198,15 @@ def are_polygons_intersecting(
     a: Vector, b: Vector, displacement_a: Vector, displacement_b: Vector
 ) -> tuple[bool, bool, np.ndarray | None]:
     """
-    Checks if the two polygons are intersecting.
+    检查两个多边形是否相交。
 
-    See https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
+    参考 https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
 
-    :param a: polygon A, as a list of [x, y] points
-    :param b: polygon B, as a list of [x, y] points
-    :param displacement_a: velocity of the polygon A
-    :param displacement_b: velocity of the polygon B
-    :return: are intersecting, will intersect, translation vector
+    :param a: 多边形 A，用 [x, y] 点列表表示
+    :param b: 多边形 B，用 [x, y] 点列表表示
+    :param displacement_a: 多边形 A 的运动位移
+    :param displacement_b: 多边形 B 的运动位移
+    :return: 当前是否相交、之后是否相交、平移向量
     """
     intersecting = will_intersect = True
     min_distance = np.inf
@@ -233,7 +234,7 @@ def are_polygons_intersecting(
                 break
             if abs(distance) < min_distance:
                 min_distance = abs(distance)
-                d = a[:-1].mean(axis=0) - b[:-1].mean(axis=0)  # center difference
+                d = a[:-1].mean(axis=0) - b[:-1].mean(axis=0)  # 中心位置之差
                 translation_axis = normal if d.dot(normal) > 0 else -normal
 
     if will_intersect:
@@ -249,14 +250,14 @@ def confidence_ellipsoid(
     param_bound: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """
-    Compute a confidence ellipsoid over the parameter theta, where y = theta^T phi
+    计算参数 theta 的置信椭球，其中 y = theta^T phi。
 
-    :param data: a dictionary {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
-    :param lambda_: l2 regularization parameter
-    :param delta: confidence level
-    :param sigma: noise covariance
-    :param param_bound: an upper-bound on the parameter norm
-    :return: estimated theta, Gramian matrix G_N_lambda, radius beta_N
+    :param data: 字典 {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
+    :param lambda_: L2 正则化参数
+    :param delta: 置信水平
+    :param sigma: 噪声协方差
+    :param param_bound: 参数范数的上界
+    :return: 估计参数 theta、Gram 矩阵 G_N_lambda、半径 beta_N
     """
     phi = np.array(data["features"])
     y = np.array(data["outputs"])
@@ -276,11 +277,11 @@ def confidence_polytope(
     data: dict, parameter_box: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """
-    Compute a confidence polytope over the parameter theta, where y = theta^T phi
+    计算参数 theta 的置信多面体，其中 y = theta^T phi。
 
-    :param data: a dictionary {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
-    :param parameter_box: a box [theta_min, theta_max]  containing the parameter theta
-    :return: estimated theta, polytope vertices, Gramian matrix G_N_lambda, radius beta_N
+    :param data: 字典 {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
+    :param parameter_box: 包含参数 theta 的盒状区间 [theta_min, theta_max]
+    :return: 估计参数 theta、多面体顶点、Gram 矩阵 G_N_lambda、半径 beta_N
     """
     param_bound = np.amax(np.abs(parameter_box))
     theta_n_lambda, g_n_lambda, beta_n = confidence_ellipsoid(
@@ -292,7 +293,7 @@ def confidence_polytope(
     h = np.array(list(itertools.product([-1, 1], repeat=theta_n_lambda.shape[0])))
     d_theta = np.array([radius_matrix @ h_k for h_k in h])
 
-    # Clip the parameter and confidence region within the prior parameter box.
+    # 将参数和置信区域裁剪到先验参数区间之内。
     theta_n_lambda = np.clip(theta_n_lambda, parameter_box[0], parameter_box[1])
     for k, _ in enumerate(d_theta):
         d_theta[k] = np.clip(
@@ -312,15 +313,15 @@ def is_valid_observation(
     sigma: float = 0.1,
 ) -> bool:
     """
-    Check if a new observation (phi, y) is valid according to a confidence ellipsoid on theta.
+    根据 theta 的置信椭球，检查新观测 (phi, y) 是否有效。
 
-    :param y: observation
-    :param phi: feature
-    :param theta: estimated parameter
-    :param gramian: Gramian matrix
-    :param beta: ellipsoid radius
-    :param sigma: noise covariance
-    :return: validity of the observation
+    :param y: 观测值
+    :param phi: 特征
+    :param theta: 估计参数
+    :param gramian: Gram 矩阵
+    :param beta: 椭球半径
+    :param sigma: 噪声协方差
+    :return: 观测是否有效
     """
     y_hat = np.tensordot(theta, phi, axes=[0, 0])
     error = np.linalg.norm(y - y_hat)
@@ -332,13 +333,13 @@ def is_valid_observation(
 
 def is_consistent_dataset(data: dict, parameter_box: np.ndarray = None) -> bool:
     """
-    Check whether a dataset {phi_n, y_n} is consistent
+    检查数据集 {phi_n, y_n} 是否一致。
 
-    The last observation should be in the confidence ellipsoid obtained by the N-1 first observations.
+    最后一个观测应位于前 N-1 个观测得到的置信椭球之内。
 
-    :param data: a dictionary {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
-    :param parameter_box: a box [theta_min, theta_max]  containing the parameter theta
-    :return: consistency of the dataset
+    :param data: 字典 {"features": [phi_0,...,phi_N], "outputs": [y_0,...,y_N]}
+    :param parameter_box: 包含参数 theta 的盒状区间 [theta_min, theta_max]
+    :return: 数据集是否一致
     """
     train_set = copy.deepcopy(data)
     y, phi = train_set["outputs"].pop(-1), train_set["features"].pop(-1)
@@ -354,14 +355,13 @@ def is_consistent_dataset(data: dict, parameter_box: np.ndarray = None) -> bool:
 
 def near_split(x, num_bins=None, size_bins=None):
     """
-    Split a number into several bins with near-even distribution.
+    将一个数尽量均匀地分配到多个分组中。
 
-    You can either set the number of bins, or their size.
-    The sum of bins always equals the total.
-    :param x: number to split
-    :param num_bins: number of bins
-    :param size_bins: size of bins
-    :return: list of bin sizes
+    可以指定分组数量或每组大小，所有分组之和始终等于原总数。
+    :param x: 要分配的数
+    :param num_bins: 分组数量
+    :param size_bins: 分组大小
+    :return: 各组大小的列表
     """
     if num_bins:
         quotient, remainder = divmod(x, num_bins)
@@ -387,12 +387,12 @@ def distance_to_circle(center, radius, direction):
 
 def distance_to_rect(line: tuple[np.ndarray, np.ndarray], rect: list[np.ndarray]):
     """
-    Compute the intersection between a line segment and a rectangle.
+    计算线段与矩形的交点距离。
 
-    See https://math.stackexchange.com/a/2788041.
-    :param line: a line segment [R, Q]
-    :param rect: a rectangle [A, B, C, D]
-    :return: the distance between R and the intersection of the segment RQ with the rectangle ABCD
+    参考 https://math.stackexchange.com/a/2788041。
+    :param line: 线段 [R, Q]
+    :param rect: 矩形 [A, B, C, D]
+    :return: R 到线段 RQ 与矩形 ABCD 交点之间的距离
     """
     r, q = line
     a, b, c, d = rect
@@ -429,7 +429,7 @@ _config_path: ContextVar[str] = ContextVar("_config_path", default="config")
 
 @contextmanager
 def track_config_path(key: str):
-    """A context manager to trace config path for meaningful error message."""
+    """跟踪配置路径的上下文管理器，用于提供清楚的错误信息。"""
     token = _config_path.set(f"{_config_path.get()}.{key}")
     try:
         yield
@@ -439,10 +439,10 @@ def track_config_path(key: str):
 
 def update_config_check(config: dict[str, Any], delta: Mapping[str, Any]) -> None:
     """
-    Check that nested mapping values in ``delta`` redefine all keys from ``config``.
+    检查 ``delta`` 中的嵌套映射是否重新定义了 ``config`` 中的所有键。
 
-    :param config: Configuration dict to update
-    :param delta: Values to apply on top of ``config``
+    :param config: 待更新的配置字典
+    :param delta: 要应用到 ``config`` 上的新值
     """
     for key, val in config.items():
         if key not in delta or not isinstance(val, Mapping):
@@ -454,7 +454,7 @@ def update_config_check(config: dict[str, Any], delta: Mapping[str, Any]) -> Non
                 new_val, Mapping
             ), f"{path} must be a mapping, got {type(new_val).__name__}"
 
-            # Handle multi-agent environments where keys are not defined in outer dict
+            # 处理多智能体环境，其键没有定义在外层字典中
             if key in ("action", "observation"):
                 nested = new_val.get(key + "_config")
                 if isinstance(nested, Mapping):
@@ -467,11 +467,11 @@ def update_config_check(config: dict[str, Any], delta: Mapping[str, Any]) -> Non
 
 def update_config(config: dict[str, Any], delta: Mapping[str, Any]) -> dict[str, Any]:
     """
-    Update ``config`` in place with ``delta`` after validating nested mappings.
+    验证嵌套映射后，用 ``delta`` 原地更新 ``config``。
 
-    :param config: Configuration dict to update
-    :param delta: Values to apply on top of ``config``
-    :return: The updated ``config`` dict
+    :param config: 待更新的配置字典
+    :param delta: 要应用到 ``config`` 上的新值
+    :return: 更新后的 ``config`` 字典
     """
     update_config_check(config, delta)
     config.update(delta)

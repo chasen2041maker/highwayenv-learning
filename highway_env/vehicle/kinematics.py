@@ -13,24 +13,24 @@ from highway_env.vehicle.objects import RoadObject
 
 class Vehicle(RoadObject):
     """
-    A moving vehicle on a road, and its kinematics.
+    道路上运动的车辆及其运动学模型。
 
-    The vehicle is represented by a dynamical system: a modified bicycle model.
-    It's state is propagated depending on its steering and acceleration actions.
+    使用修正的自行车模型描述车辆动态系统，
+    根据转向与加速度动作推进车辆状态。
     """
 
     LENGTH = 5.0
-    """ Vehicle length [m] """
+    """车辆长度，单位为米。"""
     WIDTH = 2.0
-    """ Vehicle width [m] """
+    """车辆宽度，单位为米。"""
     DEFAULT_INITIAL_SPEEDS = [23, 25]
-    """ Range for random initial speeds [m/s] """
+    """随机初始速度的范围，单位为 m/s。"""
     MAX_SPEED = 40.0
-    """ Maximum reachable speed [m/s] """
+    """可达到的最大速度，单位为 m/s。"""
     MIN_SPEED = -40.0
-    """ Minimum reachable speed [m/s] """
+    """可达到的最小速度，单位为 m/s。"""
     HISTORY_SIZE = 30
-    """ Length of the vehicle state history, for trajectory display"""
+    """车辆状态历史记录的长度，用于显示轨迹。"""
 
     def __init__(
         self,
@@ -60,18 +60,18 @@ class Vehicle(RoadObject):
         spacing: float = 1,
     ) -> Vehicle:
         """
-        Create a random vehicle on the road.
+        在道路上随机创建车辆。
 
-        The lane and /or speed are chosen randomly, while longitudinal position is chosen behind the last
-        vehicle in the road with density based on the number of lanes.
+        随机选择车道和/或速度；纵向位置放在道路中最后一辆车的后方，
+        车辆分布密度根据车道数量确定。
 
-        :param road: the road where the vehicle is driving
-        :param speed: initial speed in [m/s]. If None, will be chosen randomly
-        :param lane_from: start node of the lane to spawn in
-        :param lane_to: end node of the lane to spawn in
-        :param lane_id: id of the lane to spawn in
-        :param spacing: ratio of spacing to the front vehicle, 1 being the default
-        :return: A vehicle with random position and/or speed
+        :param road: 车辆行驶的道路
+        :param speed: 初始速度，单位为 m/s；为 None 时随机选择
+        :param lane_from: 生成车道的起始节点
+        :param lane_to: 生成车道的结束节点
+        :param lane_id: 生成车道的编号
+        :param spacing: 与前车间距的倍率，默认值为 1
+        :return: 位置和/或速度随机的车辆
         """
         _from = lane_from or road.np_random.choice(list(road.network.graph.keys()))
         _to = lane_to or road.np_random.choice(list(road.network.graph[_from].keys()))
@@ -108,12 +108,12 @@ class Vehicle(RoadObject):
     @classmethod
     def create_from(cls, vehicle: Vehicle) -> Vehicle:
         """
-        Create a new vehicle from an existing one.
+        根据已有车辆创建新车辆。
 
-        Only the vehicle dynamics are copied, other properties are default.
+        只复制车辆的运动状态，其他属性采用默认值。
 
-        :param vehicle: a vehicle
-        :return: a new vehicle at the same dynamical state
+        :param vehicle: 原车辆
+        :return: 具有相同运动状态的新车辆
         """
         v = cls(vehicle.road, vehicle.position, vehicle.heading, vehicle.speed)
         if hasattr(vehicle, "color"):
@@ -122,22 +122,22 @@ class Vehicle(RoadObject):
 
     def act(self, action: dict | str = None) -> None:
         """
-        Store an action to be repeated.
+        保存一个要持续执行的动作。
 
-        :param action: the input action
+        :param action: 输入动作
         """
         if action:
             self.action = action
 
     def step(self, dt: float) -> None:
         """
-        Propagate the vehicle state given its actions.
+        根据动作推进车辆状态。
 
-        Integrate a modified bicycle model with a 1st-order response on the steering wheel dynamics.
-        If the vehicle is crashed, the actions are overridden with erratic steering and braking until complete stop.
-        The vehicle's current lane is updated.
+        使用修正的自行车模型积分，更新位置、朝向和速度。
+        碰撞后，clip_actions 将转向设为 0，并制动至停车。
+        同时更新车辆当前所在车道。
 
-        :param dt: timestep of integration of the model [s]
+        :param dt: 模型积分的时间步长，单位为秒
         """
         self.clip_actions()
         delta_f = self.action["steering"]
@@ -202,7 +202,7 @@ class Vehicle(RoadObject):
 
     @property
     def velocity(self) -> np.ndarray:
-        return self.speed * self.direction  # TODO: slip angle beta should be used here
+        return self.speed * self.direction  # TODO：这里应使用侧滑角 beta。
 
     @property
     def destination(self) -> np.ndarray:
@@ -278,19 +278,19 @@ class Vehicle(RoadObject):
         dt: float,
     ) -> list[Vehicle]:
         """
-        Predict the future trajectory of the vehicle given a sequence of actions.
+        根据给定动作序列，预测车辆未来轨迹。
 
-        :param actions: a sequence of future actions.
-        :param action_duration: the duration of each action.
-        :param trajectory_timestep: the duration between each save of the vehicle state.
-        :param dt: the timestep of the simulation
-        :return: the sequence of future states
+        :param actions: 未来动作序列
+        :param action_duration: 每个动作的持续时间
+        :param trajectory_timestep: 相邻两次保存车辆状态的时间间隔
+        :param dt: 仿真时间步长
+        :return: 未来状态序列
         """
         states = []
         v = copy.deepcopy(self)
         t = 0
         for action in actions:
-            v.act(action)  # Low-level control action
+            v.act(action)  # 底层控制动作
             for _ in range(int(action_duration / dt)):
                 t += 1
                 v.step(dt)

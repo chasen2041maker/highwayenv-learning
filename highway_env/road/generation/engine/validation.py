@@ -31,13 +31,13 @@ def get_invalid_lanes(
     disable_prints: bool = False,
 ) -> list[Lane]:
     """
-    Determines which lanes are blocked/not traversible.
+    判断哪些车道受阻或无法通行。
 
-    :param lanes: list of lanes
-    :param forward_speed: agent speed from the swarm generation process
-    :param disable_prints: disables progress and status printing
-    :param rng: random number generator
-    :return: list of lanes that are invalid
+    :param lanes: 车道列表
+    :param forward_speed: 群体生成过程中智能体的速度
+    :param disable_prints: 是否关闭进度和状态输出
+    :param rng: 随机数生成器
+    :return: 无效车道列表
     """
 
     gridsize = 20
@@ -47,9 +47,9 @@ def get_invalid_lanes(
     for lane in wrap_with_tqdm(
         lanes, disabled=disable_prints, desc="Checking lanes for blockages"
     ):
-        # Computing the start and end points of our lane
-        # If a car can traverse from start to end point
-        # the lane is considered traversible (valid)
+        # 计算车道的起点和终点
+        # 如果车辆能够从起点行驶到终点，
+        # 则认为车道可以通行（有效）。
         start_junction = get_radially_sorted_endpoints(lanes, lane.start)
         if len(start_junction) == 1:
             start_junction_pos = start_junction[0].position(lanes)
@@ -94,21 +94,17 @@ def determine_lane_validity(
     rng: np.random.Generator,
 ) -> bool:
     """
-    Checks if a lane is traversible or not by simulating the motion of
-    car-sized balls that are pulled through the tunnel and repelled by
-    its walls.
+    模拟与车辆大小相近的小球在通道中受牵引、受墙壁排斥的运动，
+    判断车道是否可以通行。
 
-    :param lanes: list of lanes
-    :param lane: lane to check
-    :param start_pt: spawn point of the balls
-    :param end_pt: goal waypoint of the balls
-    :param grid_to_lanes: maps spatially hashed gridpoints to lane indices
-    for fast proximal checks
-    :param gridsize: size of grid for spatial hashing
-    :param forward_speed: agent speed from the swarm generation process;
-    is used for estimating the length of a lane
-    :param rng: random number generator; is used for altering the initial
-    velocities of spawned balls
+    :param lanes: 车道列表
+    :param lane: 要检查的车道
+    :param start_pt: 小球生成位置
+    :param end_pt: 小球的目标路径点
+    :param grid_to_lanes: 从空间哈希网格点到车道索引的映射，用于快速邻近检查
+    :param gridsize: 空间哈希的网格尺寸
+    :param forward_speed: 群体生成过程中智能体的速度，用于估算车道长度
+    :param rng: 随机数生成器，用于改变新生成小球的初速度
     """
     lane_length = len(lane.points) * forward_speed
 
@@ -118,27 +114,27 @@ def determine_lane_validity(
     if np.array_equal(pathway[-1], pathway[-2]):
         pathway.pop()
 
-    # FORCES:
-    # - Pulling force: leads ball along pathway to end_pt
-    # - Wall repelling force: pushes ball from proximal line barriers
-    # - Ball repelling force: pushes ball from other balls to encourage
-    #     exploration
-    # - Inelastic line barrier collisions
-    # - Friction / drag
+    # 作用力：
+    # - 牵引力：引导小球沿路径前进到 end_pt
+    # - 墙壁排斥力：将小球推离附近的线状障碍
+    # - 小球间排斥力：让小球彼此远离，以鼓励
+    # 探索更多路径
+    # - 与线状障碍的非弹性碰撞
+    # - 摩擦力或阻力
 
-    ball_radius = 2  # CONSTRAINT: 2*ball_radius >= vehicle width
-    pull_force = 0.3 / 4  # CONSTRAINT: pull_force <= ball_radius * friction
+    ball_radius = 2  # 约束：2*ball_radius >= 车辆宽度
+    pull_force = 0.3 / 4  # 约束：pull_force <= ball_radius * friction
     friction = 0.2 / 4
     repel_force = (
         ball_radius * pull_force
-    )  # CONSTRAINT: repel_force <= pull_force * ball_radius
-    repel_radius = 5  # distance at which the wall-repelling force takes effect
+    )  # 约束：repel_force <= pull_force * ball_radius
+    repel_radius = 5  # 墙壁排斥力开始生效的距离
     cross_particle_repel_force = repel_force
 
     average_speed = pull_force / friction
 
-    # if a particle is in the same spot (within repel_radius distance away)
-    # after this much time, it is considered 'dead'
+    # 如果经过这段时间，粒子仍停留在原地附近
+    # （距离不超过 repel_radius），则视为已失效。
     death_timestep_threshold = 20
 
     particles = []
@@ -147,18 +143,18 @@ def determine_lane_validity(
     max_population = 10
     timesteps_per_history_update = 5
 
-    # We will start out with one particle. If enough time passes and we still
-    # haven't reached the goal yet, we start recruiting a bunch more particles
-    # for further exploration
+    # 最初只生成一个粒子。如果经过足够长的时间，
+    # 仍未到达目标，就增加更多粒子
+    # 进行进一步探索。
 
-    # Simulation is run until one of the following conditions is met:
-    #  A: a particle reaches the goal
-    #  B: all particles become trapped
-    # or C: maximum allotted timesteps is reached
+    # 仿真持续到以下任一条件满足：
+    # A：一个粒子到达目标
+    # B：所有粒子都被困住
+    # C：达到允许的最大时间步数
 
     reached_goal = False
     for timestep in range(max_timesteps_cap):
-        # Particle spawning
+        # 生成粒子
         if len(particles) == 0 or (
             len(particles) < max_population
             and timestep > timesteps_before_particle_spam
@@ -197,7 +193,7 @@ def determine_lane_validity(
         if reached_goal:
             break
 
-        # Check for particle death
+        # 检查粒子是否失效
         if len(particles) == max_population:
             all_dead = True
             indices_past = int(death_timestep_threshold / timesteps_per_history_update)
@@ -214,7 +210,7 @@ def determine_lane_validity(
 @dataclass
 class BallParticle:
     """
-    Used by determine_lane_validity
+    供 determine_lane_validity 使用。
     """
 
     pos: np.ndarray
@@ -223,7 +219,7 @@ class BallParticle:
 
     def pull_force(self, pathway, pull_force):
         """
-        Force to pull ball along the direction of the tunnel
+        沿通道方向牵引小球的力。
         """
         closest_i = 0
         closest_dist = np.linalg.norm(self.pos - pathway[closest_i])
@@ -248,7 +244,7 @@ class BallParticle:
         self, lanes, proximal_lanes, repel_radius, repel_force, ball_radius
     ):
         """
-        Handles border repelling force and inelastic collisions
+        处理边界排斥力和非弹性碰撞。
         """
         repel_vector = np.zeros(2)
 
@@ -258,7 +254,7 @@ class BallParticle:
             left_pairs = zip(other_lane.left_points, other_lane.left_points[1:])
             right_pairs = zip(other_lane.right_points, other_lane.right_points[1:])
             for a, b in chain(left_pairs, right_pairs):
-                # Computing distance to line segment
+                # 计算到线段的距离
                 ab = b - a
                 ap = self.pos - a
                 ab_sq_len = np.sum(ab**2)
@@ -272,16 +268,16 @@ class BallParticle:
                     to_ball = self.pos - closest_point
                     distance = np.linalg.norm(to_ball)
 
-                # Repel
+                # 排斥
                 if distance < repel_radius:
                     repel_vector += (
                         to_ball * repel_force / max(distance, ball_radius) ** 2
                     )
 
-                # Collision
+                # 碰撞
                 if distance < ball_radius:
                     if distance == 0:
-                        if ab_sq_len == 0:  # should really never happen
+                        if ab_sq_len == 0:  # 正常情况下不应发生
                             if np.sum(self.vel**2) > 0:
                                 normal = -self.vel
                             else:
@@ -293,10 +289,10 @@ class BallParticle:
                     else:
                         normal = to_ball / distance
 
-                    # Adjust position
+                    # 调整位置
                     self.pos += normal * (ball_radius - distance)
 
-                    # Cancel velocity
+                    # 消除对应速度
                     vel_normal_magnitude = np.dot(self.vel, normal)
                     if vel_normal_magnitude < 0:
                         self.vel -= vel_normal_magnitude * normal
@@ -305,7 +301,7 @@ class BallParticle:
 
     def neighbor_force(self, particles, cross_particle_repel_force, ball_radius):
         """
-        Ball-ball repel force
+        小球之间的排斥力。
         """
         repel_vector = np.zeros(2)
         for other_par in particles:
@@ -335,19 +331,18 @@ class BallParticle:
 
 def kill_lanes(lanes: list[Lane], lanes_to_kil: list[Lane]) -> None:
     """
-    Removes selected lanes and repairs the holes in the
-    lane borders left behind
+    移除指定车道，并修补移除后在车道边界上留下的缺口。
 
-    :param lanes: list of lanes
-    :param lanes_to_kil: lanes to be removed
+    :param lanes: 车道列表
+    :param lanes_to_kil: 要移除的车道
     """
     lane_ids_to_kil = [
         i for i, lane in enumerate(lanes) if id(lane) in {id(l) for l in lanes_to_kil}
     ]
     lane_ids_to_kil.sort(reverse=True)
 
-    # Accounting for which intersections are getting affected by lane removal
-    # and the line sgements of the holes being left behind
+    # 记录哪些路口受到车道移除的影响，
+    # 以及留下的缺口所对应的线段
     affected_nodes = defaultdict(list)
     for lane_id in lane_ids_to_kil:
         for loc in ["start", "end"]:
@@ -363,27 +358,27 @@ def kill_lanes(lanes: list[Lane], lanes_to_kil: list[Lane]) -> None:
     for lane_id in lane_ids_to_kil:
         del lanes[lane_id]
 
-    # Repairing left behind holes
+    # 修补留下的缺口
     for node, segments in affected_nodes.items():
         junction = get_radially_sorted_endpoints(lanes, node)
         if len(junction) == 0:
             continue
 
-        # Each segment represents a hole that was left behind
-        # by lane removal
-        # We need to adjust the boundary points of the remaining neighbor
-        # lanes to cover up this hole
-        # For each segment, we find the closest lane boundary endpoint
-        # (to either endpoint of the segment)
-        # We extend this lane boundary to cover the segment's other endpoint
-        # This method was built on the assumption that the neighboring lane segment
-        # would not also be removed. But even in that case, the method
-        # remains robust in repairing the missing edges.
+        # 每条线段代表
+        # 移除车道后留下的一个缺口。
+        # 需要调整剩余相邻车道的边界点，
+        # 填补这个缺口。
+        # 对于每条线段，找到距离任意一端最近的
+        # 车道边界端点。
+        # 延长该车道边界，直到覆盖线段的另一端。
+        # 这种方法假设相邻车道段
+        # 不会同时被移除；即使被移除，
+        # 该方法仍能稳健地修补缺失边界。
         for segment in segments:
             closest_ep = None
             closest_side = None
             closest_dist = None
-            first_point_is_s0 = False  # True -> segment[1] is first point
+            first_point_is_s0 = False  # True 表示 segment[1] 是第一个点
             for ep in junction:
                 for side in ["left_points", "right_points"]:
                     point = getattr(lanes[ep.id], side)[ep.point_index()]
@@ -412,10 +407,9 @@ def kill_lanes(lanes: list[Lane], lanes_to_kil: list[Lane]) -> None:
 
 def remove_disjoint_clusters(lanes: list[Lane]) -> None:
     """
-    Ensures all intersections are logically interconnected with
-    each other by simply discarding any smaller disjoint sections
-    of the network
-    :param lanes: list of lanes
+    通过丢弃道路网络中较小、互不连通的部分，确保所有保留的路口在逻辑上相互连通。
+
+    :param lanes: 车道列表
     """
     nodeset = get_nodeset(lanes)
 
@@ -429,9 +423,9 @@ def remove_disjoint_clusters(lanes: list[Lane]) -> None:
         if len(partition_element) > len(nodeset):
             nodeset = partition_element
 
-    # nodeset now contains the largest partition-element.
-    # We must remove all lanes who does not connect to
-    # a node in this nodeset.
+    # nodeset 现在包含最大的连通分量。
+    # 需要移除所有不与 nodeset 中
+    # 任何节点相连的车道。
     lane_ids_to_remove = []
     for lane_id, lane in enumerate(lanes):
         if lane.start not in nodeset:
@@ -443,9 +437,9 @@ def remove_disjoint_clusters(lanes: list[Lane]) -> None:
 
 def traverse_lane_graph(lanes: list[Lane], node: str) -> set[str]:
     """
-    :param lanes: list of lanes
-    :param node: starting node
-    :return: set of all nodes accessible from the start node
+    :param lanes: 车道列表
+    :param node: 起始节点
+    :return: 从起始节点可以到达的所有节点组成的集合
     """
     nodeset = {node}
     laneset = set()
@@ -469,14 +463,13 @@ def get_all_intersection_points(
     disable_prints: bool = False,
 ) -> list[np.ndarray]:
     """
-    Finds and lists any unwanted intersections between physical boundary lines.
+    查找并列出实际边界线之间不应出现的交点。
 
-    :param lanes: list of lanes
-    :param lane_to_grid: maps lane indices to spatially hashed gridpoints
-    for fast proximal checks
-    :param grid_to_lanes: maps spatially hashed gridpoints to lane indices
-    :param disable_prints: disables progress and status printing
-    :return: list of intersection points
+    :param lanes: 车道列表
+    :param lane_to_grid: 从车道索引到空间哈希网格点的映射，用于快速邻近检查
+    :param grid_to_lanes: 从空间哈希网格点到车道索引的映射
+    :param disable_prints: 是否关闭进度和状态输出
+    :return: 交点列表
     """
     intersecting_points: list[NDArray] = []
     for lane_id, lane in enumerate(
@@ -514,10 +507,10 @@ def get_all_intersection_points(
 
 def check_lanes_type_validity(lanes: list[Lane]) -> bool:
     """
-    Checks type validity of every Lane.
+    检查每个 Lane 的类型是否有效。
 
-    :param lanes: list of lanes
-    :return: whether or not all lanes are valid
+    :param lanes: 车道列表
+    :return: 是否所有车道都有效
     """
     for lane in lanes:
         if not (

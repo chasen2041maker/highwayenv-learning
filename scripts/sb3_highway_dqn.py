@@ -8,11 +8,11 @@ import highway_env  # noqa: F401
 TRAIN = True
 
 if __name__ == "__main__":
-    # Create the environment
+    # 创建环境
     env = gym.make("highway-fast-v0", render_mode="rgb_array")
     obs, info = env.reset()
 
-    # Create the model
+    # 创建模型
     model = DQN(
         "MlpPolicy",
         env,
@@ -29,28 +29,28 @@ if __name__ == "__main__":
         tensorboard_log="highway_dqn/",
     )
 
-    # Train the model
+    # 训练模型
     if TRAIN:
         model.learn(total_timesteps=int(2e4))
         model.save("highway_dqn/model")
         del model
 
-    # Run the trained model and record video
+    # 运行训练好的模型并录制视频
     model = DQN.load("highway_dqn/model", env=env)
     env = RecordVideo(
         env, video_folder="highway_dqn/videos", episode_trigger=lambda e: True
     )
-    env.unwrapped.config["simulation_frequency"] = 15  # Higher FPS for rendering
+    env.unwrapped.config["simulation_frequency"] = 15  # 提高渲染帧率
     env.unwrapped.set_record_video_wrapper(env)
 
     for videos in range(10):
         done = truncated = False
         obs, info = env.reset()
         while not (done or truncated):
-            # Predict
+            # 预测动作
             action, _states = model.predict(obs, deterministic=True)
-            # Get reward
+            # 执行动作并获取奖励
             obs, reward, done, truncated, info = env.step(action)
-            # Render
+            # 渲染
             env.render()
     env.close()

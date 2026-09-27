@@ -18,22 +18,17 @@ def generate_road_network_skeleton(
     disable_prints: bool = False,
 ) -> list[Lane]:
     """
-    Uses a swarm of moving, replicating agents to sketch out a rough draft of
-    the road topology.
+    使用一群会移动、复制的智能体，勾画道路连接结构的初稿。
 
-    :param target_num_endpoints: number of intersections to generate.
-    :param forward_speed: distance an agent travels every timestep
-    :param merge_radius: minimum distance an agent can be from another
-    agent/lane before being killed (merged)
-    :param prevent_replication_radius: distance an agent has to be from
-    another agent/lane in order to be able to replicate
-    :param age_of_maturity: number of timesteps before an agent can
-    replicate
-    :param perlin_variation_params: determines the rates of turning and
-    replication and how they vary over physical space
-    :param rng: random number generator
-    :param disable_prints: disables progress and status printing
-    :return: list of lanes
+    :param target_num_endpoints: 要生成的路口数量
+    :param forward_speed: 智能体每个时间步移动的距离
+    :param merge_radius: 智能体接近其他智能体或车道到此距离时终止并合并
+    :param prevent_replication_radius: 智能体与其他智能体或车道至少相距此距离，才允许复制
+    :param age_of_maturity: 智能体经过多少个时间步后可以复制
+    :param perlin_variation_params: 决定转向和复制的速率，以及它们随空间位置的变化
+    :param rng: 随机数生成器
+    :param disable_prints: 是否关闭进度和状态输出
+    :return: 车道列表
     """
 
     param_getter = PerlinVariation(perlin_variation_params, rng)
@@ -54,18 +49,18 @@ def generate_road_network_skeleton(
             desc="Generating road network skeleton",
         ) as pbar:
             while num_locations < target_num_endpoints and len(agents) > 0:
-                # Movement
+                # 移动
                 for agent in agents:
                     agent.step(
                         forward_speed=forward_speed, param_getter=param_getter, rng=rng
                     )
 
-                # Replication & Death
+                # 复制与终止
                 agents_to_add = []
                 agents_to_remove = []
                 for agent in agents:
                     if agent.is_too_young(age_of_maturity):
-                        continue  # prevent replication and death
+                        continue  # 阻止复制和终止
 
                     true_population = len(agents) - len(agents_to_remove)
                     prevent_replication, kill = agent.death_outcome(
@@ -99,7 +94,7 @@ def generate_road_network_skeleton(
                             agents_to_remove.append(agent)
                             num_locations += 1
 
-                # Converting path histories to lanes
+                # 将历史路径转换为车道
                 for dying_agent in agents_to_remove:
                     new_lane = Lane(
                         start=dying_agent.start_location,
@@ -114,7 +109,7 @@ def generate_road_network_skeleton(
                     lanes.append(new_lane)
                     agents.remove(dying_agent)
 
-                # Birthing new agents
+                # 生成新的智能体
                 for new_agent in agents_to_add:
                     agents.append(new_agent)
 
@@ -122,7 +117,7 @@ def generate_road_network_skeleton(
                 pbar.n = min(num_locations, target_num_endpoints)
                 pbar.refresh()
 
-        # Converting the remaining agents into lanes
+        # 将剩余智能体转换为车道
         for agent in agents:
             new_lane = Lane(
                 start=agent.start_location,
@@ -163,7 +158,7 @@ class ConstructionAgent:
         [1, 0, 1],
         [1, 1, 0],
         [1, 1, 1],
-    ]  # possible subsets of {left, straight, right}
+    ]  # {左转、直行、右转} 的可能子集
 
     @classmethod
     def random_fork_config(cls, rng):
@@ -224,9 +219,9 @@ class ConstructionAgent:
         spatial_hash_gridsize,
     ):
         """
-        :return: prevent_replication, die
+        :return: prevent_replication（是否阻止复制）、die（是否终止）
         """
-        # Death due to spontaneous death chance
+        # 根据随机终止概率结束智能体
         spontaneous_death_chance = param_getter.paramAt(
             "spontaneous_death_chance", self.position
         )
@@ -234,16 +229,16 @@ class ConstructionAgent:
         if true_population > 3 and rng.random() < spontaneous_death_chance:
             return True, True
 
-        # Death due to merging
+        # 因合并而终止
         prevent_replication = False
         kill = False
 
-        # checking the path history of other agents (including ourselves)
+        # 检查其他智能体及自身的历史路径
         for other_agent in agents:
             for i, position in enumerate(other_agent.history):
                 if self is other_agent and i >= len(self.history) - age_of_maturity:
-                    # being in proximity to places we were just a few timesteps ago should not count
-                    # what matters is if we loop around and hit ourselves, which would require much more timesteps
+                    # 靠近自身几个时间步之前经过的位置不应计入
+                    # 需要判断的是绕一圈后撞上自身路径的情况，这通常需要更多时间步
                     break
 
                 dist = np.linalg.norm(position - self.position)
@@ -253,7 +248,7 @@ class ConstructionAgent:
                     kill = True
                     break
 
-        # checking already laid down lanes
+        # 检查已经生成的车道
         if not kill:
             gridpoint = point_to_gridpoint(self.position, spatial_hash_gridsize)
             proximal_lanes = get_proximal_lanes_wrt_gridpoint(
@@ -280,8 +275,8 @@ class ConstructionAgent:
             fork_config = ConstructionAgent.random_fork_config(rng)
             for i, angle in enumerate(ConstructionAgent.fork_angles):
                 if fork_config[i] == 1 or true_population < 3:
-                    # if we are underpopulated, reproduce the maximum number of offspring (3)
-                    # to guard against extinction
+                    # 如果智能体数量不足，则生成最多的后代（3 个）
+                    # 以防智能体全部消失
                     new_agent = ConstructionAgent(
                         start_location=num_locations,
                         position=self.position.copy(),
@@ -316,5 +311,5 @@ class PerlinVariation:
             persistence=PerlinVariation.persistence,
             lacunarity=PerlinVariation.lacunarity,
         )
-        # Squared perlin noise
+        # Perlin 噪声的平方
         return (((upper - lower) * noise_val * abs(noise_val)) + upper + lower) / 2.0

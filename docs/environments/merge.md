@@ -47,11 +47,11 @@ See {ref}`road-neighbour-vehicles` for details.
     "reward_speed_range": [20, 30],
     "merging_speed_reward": -0.5,
     "lane_change_reward": -0.05,
-    "simulation_frequency": 15,  # [Hz]
-    "policy_frequency": 1,  # [Hz]
+    "simulation_frequency": 15,  # 单位：赫兹
+    "policy_frequency": 1,  # 单位：赫兹
     "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
-    "screen_width": 600,  # [px]
-    "screen_height": 150,  # [px]
+    "screen_width": 600,  # 单位：像素
+    "screen_height": 150,  # 单位：像素
     "centering_position": [0.3, 0.5],
     "scaling": 5.5,
     "show_trajectories": False,

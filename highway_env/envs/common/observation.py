@@ -34,19 +34,19 @@ class ObservationType:
         self.__observer_vehicle = None
 
     def space(self) -> spaces.Space:
-        """Get the observation space."""
+        """获取观察空间。"""
         raise NotImplementedError()
 
     def observe(self):
-        """Get an observation of the environment state."""
+        """获取环境当前状态的观察。"""
         raise NotImplementedError()
 
     @property
     def observer_vehicle(self):
         """
-        The vehicle observing the scene.
+        用于观察场景的车辆。
 
-        If not set, the first controlled vehicle is used by default.
+        若未单独设置，默认使用第一辆受控车辆。
         """
         return self.__observer_vehicle or self.env.vehicle
 
@@ -57,19 +57,19 @@ class ObservationType:
 
 class GrayscaleObservation(ObservationType):
     """
-    An observation class that collects directly what the simulator renders.
+    直接采集模拟器渲染画面的观察类型。
 
-    Also stacks the collected frames as in the nature DQN.
-    The observation shape is C x W x H.
+    按 Nature DQN 中的方法堆叠连续帧。
+    观察形状为 C × W × H（通道、宽、高）。
 
-    Specific keys are expected in the configuration dictionary passed.
-    Example of observation dictionary in the environment config::
+    传入的配置字典需要包含指定字段。
+    环境配置中的观察字典示例::
 
         "observation": {
             "type": "GrayscaleObservation",
             "observation_shape": (84, 84)
             "stack_size": 4,
-            "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion,
+            "weights": [0.2989, 0.5870, 0.1140],  # RGB 转灰度的权重
         }
     """
 
@@ -89,7 +89,7 @@ class GrayscaleObservation(ObservationType):
         self.weights = weights
         self.obs = np.zeros(self.shape, dtype=np.uint8)
 
-        # The viewer configuration can be different between this observation and env.render() (typically smaller)
+        # 此观察使用的查看器配置可与 env.render() 不同，通常采用较小的画面。
         viewer_config = env.config.copy()
         viewer_config.update(
             {
@@ -161,7 +161,7 @@ class TimeToCollisionObservation(ObservationType):
 
 
 class KinematicObservation(ObservationType):
-    """Observe the kinematics of nearby vehicles."""
+    """观察附近车辆的运动学状态。"""
 
     FEATURES: list[str] = ["presence", "x", "y", "vx", "vy"]
 
@@ -181,16 +181,16 @@ class KinematicObservation(ObservationType):
         **kwargs,
     ) -> None:
         """
-        :param env: The environment to observe
-        :param features: Names of features used in the observation
-        :param vehicles_count: Number of observed vehicles
-        :param features_range: a dict mapping a feature name to [min, max] values
-        :param absolute: Use absolute coordinates
-        :param order: Order of observed vehicles. Values: sorted, shuffled
-        :param normalize: Should the observation be normalized
-        :param clip: Should the value be clipped in the desired range
-        :param see_behind: Should the observation contains the vehicles behind
-        :param observe_intentions: Observe the destinations of other vehicles
+        :param env: 要观察的环境
+        :param features: 观察中使用的特征名称
+        :param vehicles_count: 观察中的车辆数量
+        :param features_range: 将特征名称映射到 [min, max] 范围的字典
+        :param absolute: 是否采用绝对坐标
+        :param order: 观察车辆的排列方式，可取 sorted 或 shuffled
+        :param normalize: 是否归一化观察
+        :param clip: 是否将数值裁剪到指定范围
+        :param see_behind: 是否观察后方车辆
+        :param observe_intentions: 是否观察其他车辆的目的地
         """
         super().__init__(env)
         self.features = features or self.FEATURES
@@ -214,10 +214,10 @@ class KinematicObservation(ObservationType):
 
     def normalize_obs(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Normalize the observation values.
+        归一化观察数值。
 
-        For now, assume that the road is straight along the x axis.
-        :param Dataframe df: observation data
+        当前假设道路沿 x 轴直线延伸。
+        :param Dataframe df: 观察数据
         """
         if not self.features_range:
             assert self.env.road is not None
@@ -244,9 +244,9 @@ class KinematicObservation(ObservationType):
         if not self.env.road:
             return np.zeros(self.space().shape)
 
-        # Add ego-vehicle
+        # 加入自车状态。
         df = pd.DataFrame.from_records([self.observer_vehicle.to_dict()])
-        # Add nearby traffic
+        # 加入附近交通参与者的状态。
         close_vehicles = self.env.road.close_objects_to(
             self.observer_vehicle,
             self.env.PERCEPTION_DISTANCE,
@@ -267,26 +267,26 @@ class KinematicObservation(ObservationType):
 
         df = df[self.features]
 
-        # Normalize and clip
+        # 归一化并裁剪数值。
         if self.normalize:
             df = self.normalize_obs(df)
-        # Fill missing rows
+        # 补齐缺少的行。
         if df.shape[0] < self.vehicles_count:
             rows = np.zeros((self.vehicles_count - df.shape[0], len(self.features)))
             df = pd.concat(
                 [df, pd.DataFrame(data=rows, columns=self.features)], ignore_index=True
             )
-        # Reorder
+        # 重新排列。
         df = df[self.features]
         obs = df.values.copy()
         if self.order == "shuffled":
             self.env.np_random.shuffle(obs[1:])
-        # Flatten
+        # 转换为观察空间要求的数据类型，这里不改变数组形状。
         return obs.astype(self.space().dtype)
 
 
 class OccupancyGridObservation(ObservationType):
-    """Observe an occupancy grid of nearby vehicles."""
+    """以占用网格表示附近车辆。"""
 
     FEATURES: list[str] = ["presence", "vx", "vy", "on_road"]
     GRID_SIZE: list[list[float]] = [[-5.5 * 5, 5.5 * 5], [-5.5 * 5, 5.5 * 5]]
@@ -306,15 +306,14 @@ class OccupancyGridObservation(ObservationType):
         **kwargs,
     ) -> None:
         """
-        :param env: The environment to observe
-        :param features: Names of features used in the observation
-        :param grid_size: real world size of the grid [[min_x, max_x], [min_y, max_y]]
-        :param grid_step: steps between two cells of the grid [step_x, step_y]
-        :param features_range: a dict mapping a feature name to [min, max] values
-        :param absolute: use absolute or relative coordinates
-        :param align_to_vehicle_axes: if True, the grid axes are aligned with vehicle axes. Else, they are aligned
-               with world axes.
-        :param clip: clip the observation in [-1, 1]
+        :param env: 要观察的环境
+        :param features: 观察中使用的特征名称
+        :param grid_size: 网格在真实世界中的范围 [[min_x, max_x], [min_y, max_y]]
+        :param grid_step: 相邻网格单元的间距 [step_x, step_y]
+        :param features_range: 将特征名称映射到 [min, max] 范围的字典
+        :param absolute: 使用绝对坐标还是相对坐标
+        :param align_to_vehicle_axes: 为 True 时，网格坐标轴与车辆对齐；否则与世界坐标轴对齐
+        :param clip: 是否将观察裁剪到 [-1, 1]
         """
         super().__init__(env)
         self.features = features if features is not None else self.FEATURES
@@ -345,10 +344,10 @@ class OccupancyGridObservation(ObservationType):
 
     def normalize(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Normalize the observation values.
+        归一化观察数值。
 
-        For now, assume that the road is straight along the x axis.
-        :param Dataframe df: observation data
+        当前假设道路沿 x 轴直线延伸。
+        :param Dataframe df: 观察数据
         """
         if not self.features_range:
             self.features_range = {
@@ -367,22 +366,22 @@ class OccupancyGridObservation(ObservationType):
         if self.absolute:
             raise NotImplementedError()
         else:
-            # Initialize empty data
+            # 初始化空数据。
             self.grid.fill(np.nan)
 
-            # Get nearby traffic data
+            # 获取附近交通数据。
             df = pd.DataFrame.from_records(
                 [v.to_dict(self.observer_vehicle) for v in self.env.road.vehicles]
             )
-            # Normalize
+            # 归一化。
             df = self.normalize(df)
             assert self.features_range is not None
-            # Fill-in features
+            # 填入特征。
             for layer, feature in enumerate(self.features):
-                if feature in df.columns:  # A vehicle feature
+                if feature in df.columns:  # 车辆特征。
                     for _, vehicle in df[::-1].iterrows():
                         x, y = vehicle["x"], vehicle["y"]
-                        # Recover unnormalized coordinates for cell index
+                        # 还原未归一化的坐标，用于计算网格单元索引。
                         if "x" in self.features_range:
                             x = utils.lmap(
                                 x,
@@ -424,13 +423,13 @@ class OccupancyGridObservation(ObservationType):
 
     def pos_to_index(self, position: Vector, relative: bool = False) -> tuple[int, int]:
         """
-        Convert a world position to a grid cell index
+        将世界坐标位置转换为网格单元索引。
 
-        If align_to_vehicle_axes the cells are in the vehicle's frame, otherwise in the world frame.
+        启用 align_to_vehicle_axes 时，单元位于车辆坐标系中，否则位于世界坐标系中。
 
-        :param position: a world position
-        :param relative: whether the position is already relative to the observer's position
-        :return: the pair (i,j) of the cell index
+        :param position: 世界坐标位置
+        :param relative: 位置是否已经相对于观察车辆表示
+        :return: 网格单元索引对 (i, j)
         """
         if not relative:
             position -= self.observer_vehicle.position
@@ -465,13 +464,13 @@ class OccupancyGridObservation(ObservationType):
         self, layer_index: int, lane_perception_distance: float = 100
     ) -> None:
         """
-        A layer to encode the onroad (1) / offroad (0) information
+        用一层网格编码道路内（1）与道路外（0）信息。
 
-        Here, we iterate over lanes and regularly placed waypoints on these lanes to fill the corresponding cells.
-        This approach is faster if the grid is large and the road network is small.
+        遍历各车道及其上等间距的路径点，填充对应单元。
+        网格较大而道路网络较小时，这种方法更快。
 
-        :param layer_index: index of the layer in the grid
-        :param lane_perception_distance: lanes are rendered +/- this distance from vehicle location
+        :param layer_index: 该层在网格中的索引
+        :param lane_perception_distance: 在车辆位置前后此距离内绘制车道
         """
         lane_waypoints_spacing = np.amin(self.grid_step)
         road = cast(Road, self.env.road)
@@ -495,10 +494,10 @@ class OccupancyGridObservation(ObservationType):
 
     def fill_road_layer_by_cell(self, layer_index) -> None:
         """
-        A layer to encode the onroad (1) / offroad (0) information
+        用一层网格编码道路内（1）与道路外（0）信息。
 
-        In this implementation, we iterate the grid cells and check whether the corresponding world position
-        at the center of the cell is onroad/offroad. This approach is faster if the grid is small and the road network large.
+        此实现遍历网格单元，检查其中心对应的世界坐标位于道路内还是道路外。
+        网格较小而道路网络较大时，这种方法更快。
         """
         road = cast(Road, self.env.road)
         for i, j in product(range(self.grid.shape[-2]), range(self.grid.shape[-1])):
@@ -615,7 +614,7 @@ class MultiAgentObservation(ObservationType):
 
 
 class TupleObservation(ObservationType):
-    """Compose several unnamed observation types into a tuple."""
+    """将多个未命名的观察类型组合为一个元组。"""
 
     def __init__(
         self, env: AbstractEnv, observation_configs: list[dict], **kwargs
@@ -634,7 +633,7 @@ class TupleObservation(ObservationType):
 
 
 class DictObservation(ObservationType):
-    """Compose several named observation types into a dict."""
+    """将多个带名称的观察类型组合为一个字典。"""
 
     def __init__(
         self, env: AbstractEnv, observation_configs: dict[str, dict], **kwargs
@@ -661,19 +660,19 @@ class DictObservation(ObservationType):
 
 
 class ExitObservation(KinematicObservation):
-    """Specific to exit_env, observe the distance to the next exit lane as part of a KinematicObservation."""
+    """专用于 exit_env：在运动学观察中加入到下一个出口车道的距离。"""
 
     def observe(self) -> np.ndarray:
         if not self.env.road:
             return np.zeros(self.space().shape)
 
-        # Add ego-vehicle
+        # 加入自车状态。
         ego_dict = self.observer_vehicle.to_dict()
         exit_lane = self.env.road.network.get_lane(("1", "2", -1))
         ego_dict["x"] = exit_lane.local_coordinates(self.observer_vehicle.position)[0]
         df = pd.DataFrame.from_records([ego_dict])[self.features]
 
-        # Add nearby traffic
+        # 加入附近交通参与者的状态。
         close_vehicles = self.env.road.close_vehicles_to(
             self.observer_vehicle,
             self.env.PERCEPTION_DISTANCE,
@@ -696,35 +695,34 @@ class ExitObservation(KinematicObservation):
                 ],
                 ignore_index=True,
             )
-        # Normalize and clip
+        # 归一化并裁剪数值。
         if self.normalize:
             df = self.normalize_obs(df)
-        # Fill missing rows
+        # 补齐缺少的行。
         if df.shape[0] < self.vehicles_count:
             rows = np.zeros((self.vehicles_count - df.shape[0], len(self.features)))
             df = pd.concat(
                 [df, pd.DataFrame(data=rows, columns=self.features)], ignore_index=True
             )
-        # Reorder
+        # 重新排列。
         df = df[self.features]
         obs = df.values.copy()
         if self.order == "shuffled":
             self.env.np_random.shuffle(obs[1:])
-        # Flatten
+        # 转换为观察空间要求的数据类型，这里不改变数组形状。
         return obs.astype(self.space().dtype)
 
 
 class LidarObservation(ObservationType):
     """
-    Observe nearby vehicles and solid objects by simulating a LiDAR sensor array.
+    通过模拟 LiDAR 传感器阵列，观察附近车辆和实体物体。
 
-    This observation type divides the space around the vehicle into angular sectors,
-    and returns an array with one row per angular sector and two columns:
-    - distance to the nearest collidable object (vehicles or obstacles)
-    - component of the objects's relative velocity along that direction
+    将车辆周围空间划分为多个角度扇区，返回每个扇区一行、共两列的数组：
+    - 到最近可碰撞物体（车辆或障碍物）的距离；
+    - 该物体相对速度在当前方向上的分量。
 
-    The angular sector of index 0 corresponds to an angle 0 (east), and then each
-    index/sector increases the angle (east, south, west, north).
+    编号 0 的扇区对应角度 0（东侧），随后扇区角度逐渐增加，
+    依次经过东、南、西、北方向。
     """
 
     DISTANCE = 0
@@ -739,10 +737,10 @@ class LidarObservation(ObservationType):
         **kwargs,
     ):
         """
-        :param env: The environment to observe
-        :param cells: Number of angular sectors
-        :param maximum_range: Maximum sensor range
-        :param normalize: Divide distance and relative speed by ``maximum_range``
+        :param env: 要观察的环境
+        :param cells: 角度扇区数量
+        :param maximum_range: 传感器的最大探测范围
+        :param normalize: 是否将距离和相对速度除以 ``maximum_range``
         """
         super().__init__(env, **kwargs)
         self.cells = cells
@@ -783,7 +781,7 @@ class LidarObservation(ObservationType):
                 velocity = (obstacle.velocity - origin_velocity).dot(direction)
                 self.grid[center_index, :] = [distance, velocity]
 
-            # Angular sector covered by the obstacle
+            # 障碍物覆盖的角度扇区。
             corners = utils.rect_corners(
                 obstacle.position, obstacle.LENGTH, obstacle.WIDTH, obstacle.heading
             )
@@ -791,17 +789,17 @@ class LidarObservation(ObservationType):
             min_angle, max_angle = min(angles), max(angles)
             if (
                 min_angle < -np.pi / 2 < np.pi / 2 < max_angle
-            ):  # Object's corners are wrapping around +pi
+            ):  # 物体的角点跨越 +pi 的角度边界。
                 min_angle, max_angle = max_angle, min_angle + 2 * np.pi
             start, end = self.angle_to_index(min_angle), self.angle_to_index(max_angle)
             if start < end:
                 indexes = np.arange(start, end + 1)
-            else:  # Object's corners are wrapping around 0
+            else:  # 物体的角点跨越 0 的角度边界。
                 indexes = np.hstack(
                     [np.arange(start, self.cells), np.arange(0, end + 1)]
                 )
 
-            # Actual distance computation for these sections
+            # 计算这些扇区内的实际距离。
             for index in indexes:
                 direction = self.index_to_direction(index)
                 ray = (origin, origin + self.maximum_range * direction)
@@ -829,11 +827,10 @@ class LidarObservation(ObservationType):
 
 class LaneLidarObservation(LidarObservation):
     """
-    Allows the agent to directly observe the surrounding lane borders
-    as if they were walls.
+    让智能体直接观察周围车道边界，将边界视为墙壁。
 
-    Requires a PartitionedRoadNetwork.
-    Ignores non-PolyLanes.
+    要求使用 PartitionedRoadNetwork。
+    忽略非 PolyLane 类型的车道。
     """
 
     def __init__(
@@ -849,7 +846,7 @@ class LaneLidarObservation(LidarObservation):
 
     def trace(self, origin: np.ndarray, origin_velocity: np.ndarray) -> np.ndarray:
         """
-        Casts rays to observe distances to lanes.
+        投射射线，观察到车道的距离。
         """
         self.origin = origin.copy()
 
@@ -864,16 +861,16 @@ class LaneLidarObservation(LidarObservation):
         gridsize = self.env.road.network.partition_gridsize
 
         for index in range(self.cells):
-            angle = index * self.angle + self.vehicle_heading  # offset by vehicle dir
+            angle = index * self.angle + self.vehicle_heading  # 根据车辆朝向加入角度偏移。
             vx = math.cos(angle)
             vy = math.sin(angle)
 
-            # Tracing the path of the ray through the partition-grids
+            # 沿空间分区网格追踪射线路径。
             gx, gy = point_to_gridpoint(origin, gridsize)
 
             lanes_checked = set()
             while True:
-                # Checking for intersections
+                # 检查是否相交。
                 proximal_lanes = get_proximal_lanes_wrt_gridpoint(
                     self.env.road.network.grid_to_lanes, (gx, gy)
                 )
@@ -888,7 +885,7 @@ class LaneLidarObservation(LidarObservation):
                     break
                 lanes_checked.update(lanes_to_check)
 
-                # Calculating next grid sector to continue our search
+                # 计算下一个待搜索的网格分区。
                 next_gx = gx + (1 if vx > 0 else 0)
                 next_gy = gy + (1 if vy > 0 else 0)
                 next_gx_t = (
@@ -910,8 +907,8 @@ class LaneLidarObservation(LidarObservation):
                 if next_gy_t <= next_gx_t:
                     gy = next_gy if vy > 0 else next_gy - 1
 
-            # All lanes are stationary, so the SPEED values only
-            # depend on the ego-vehicle's own velocity
+            # 所有车道都静止不动，因此 SPEED 数值
+            # 只取决于自车本身的速度。
             self.grid[index, LidarObservation.SPEED] = (
                 -origin_velocity[0] * vx - origin_velocity[1] * vy
             )
@@ -953,7 +950,7 @@ class LaneLidarObservation(LidarObservation):
 
 class NavigationObservation(ObservationType):
     """
-    Directs the agent to the next waypoint along the shortest path to the goal.
+    沿通往目标的最短路径，指引智能体驶向下一个路径点。
 
     [distance_to_waypoint, cos(delta_heading), sin(delta_heading)]
     """
@@ -1005,8 +1002,8 @@ class NavigationObservation(ObservationType):
         waypt_offset = self.waypoint - self.observer_vehicle.position
         absolute_heading_to_waypt = np.arctan2(waypt_offset[1], waypt_offset[0])
 
-        # Completely different from delta_h, cos_dh, sin_dh in
-        # RelativeGoalObservation
+        # 这里的定义与 RelativeGoalObservation 中的
+        # delta_h、cos_dh、sin_dh 完全不同。
         delta_h = absolute_heading_to_waypt - self.observer_vehicle.heading
         cos_dh = np.cos(delta_h)
         sin_dh = np.sin(delta_h)
@@ -1022,7 +1019,7 @@ class NavigationObservation(ObservationType):
 
     def create_new_path(self) -> None:
         """
-        Computes the shortest path from our start lane to the goal lane
+        计算起始车道到目标车道的最短路径。
         """
         assert self.env.road is not None
         start_lane_index = self.observer_vehicle.lane_index
@@ -1032,15 +1029,15 @@ class NavigationObservation(ObservationType):
             start_node, self.goal_lane_index[0]
         )
 
-        # If we pass through the other endpoint of the goal lane
-        # anyway, we should not need to traverse across this lane
+        # 如果本来就会经过目标车道的另一端，
+        # 则无需再完整驶过该车道。
         if self.goal_lane_index[1] in self.path:
             self.path = self.env.road.network.shortest_path(
                 start_node, self.goal_lane_index[1]
             )
 
-        # If, despite our initial start node preference,
-        # the path takes us through the other node, we just start from this other node
+        # 如果路径没有经过最初偏好的起始节点，
+        # 而是经过另一端节点，就改从另一端出发。
         if len(self.path) > 1 and (
             self.path[1] == start_lane_index[0] or self.path[1] == start_lane_index[1]
         ):
@@ -1048,7 +1045,7 @@ class NavigationObservation(ObservationType):
 
         if (
             len(self.path) == 0
-        ):  # This may happen if the start happens to be equal to the goal
+        ):  # 起点恰好等于目标点时，可能出现这种情况。
             self.path.append(start_node)
 
     def get_next_node(self, lane_index: LaneIndex) -> str:
@@ -1056,8 +1053,8 @@ class NavigationObservation(ObservationType):
         _from, _to, _ = lane_index
         lane = self.env.road.network.get_lane(lane_index)
 
-        # We have two potential 'nodes' to choose from.
-        # We prefer the one in the direction we are already aligned in
+        # 有两个可选的节点。
+        # 优先选择与车辆当前朝向一致的节点。
         lane_heading = lane.heading_at(
             lane.local_coordinates(self.observer_vehicle.position)[0]
         )
@@ -1074,15 +1071,14 @@ class NavigationObservation(ObservationType):
 
     def get_waypoint(self) -> np.ndarray:
         """
-        Computes the waypoint that denotes which path
-        to take at an intersection
+        计算用于指示路口行驶方向的路径点。
         """
         if self.node == -1:
             return self.goal_pos
 
-        # Find the lane that goes from self.node to the next
-        # node in the path sequence
-        index = self.path.index(self.node)  # node is guaranteed to be in path
+        # 查找从 self.node 出发、
+        # 通向路径序列下一个节点的车道。
+        index = self.path.index(self.node)  # 可保证 node 位于路径中。
         if index == len(self.path) - 1:
             lane_index = self.goal_lane_index
             if lane_index[0] != self.node:
@@ -1102,15 +1098,15 @@ class NavigationObservation(ObservationType):
 
     def update_next_node(self) -> None:
         """
-        Computes which intersection to drive towards next.
+        计算下一步应驶向哪个交叉路口。
         """
         current_lane_index = self.observer_vehicle.lane_index
         if current_lane_index == self.goal_lane_index:
             self.node = -1
             return
 
-        # Node will be the intersection we are facing in
-        # Other_node will be the intersection towards our rear
+        # node 表示车辆面向的交叉路口。
+        # other_node 表示车辆后方的交叉路口。
 
         node = self.get_next_node(current_lane_index)
         if node == current_lane_index[0]:
@@ -1132,33 +1128,32 @@ class NavigationObservation(ObservationType):
             self.node = other_node
             return
 
-        # We must have deviated off-course; Finding new path
+        # 车辆已偏离路线，重新寻找路径。
         self.cached_paths.append(self.path)
 
-        # Checking already generated paths
+        # 检查已经生成的路径。
         for cached_path in self.cached_paths[:-1]:
             if node in cached_path:
                 self.path = cached_path
                 self.node = node
                 return
 
-        # Computing new path
+        # 计算新路径。
         self.create_new_path()
         self.node = self.path[0]
 
 
 class RelativeGoalObservation(ObservationType):
     """
-    Observes the position and heading of a goal parking spot
-    relative to the agent's own position and heading.
+    观察目标停车位相对于自车的位置和朝向。
 
-    [longitudinal offset, lateral offset, cos(delta_heading), sin(delta_heading)]
+    [纵向偏移, 横向偏移, cos(delta_heading), sin(delta_heading)]
 
-    observer_vehicle must have a .goal attribute
-    (a RoadObject with .position and .heading)
+    observer_vehicle 必须具有 .goal 属性，
+    该属性是带有 .position 和 .heading 的 RoadObject。
     """
 
-    OBS_SIZE = 4  # [longitudinal offset, lateral offset, cos_dh, sin_dh]
+    OBS_SIZE = 4  # [纵向偏移, 横向偏移, cos_dh, sin_dh]
 
     def __init__(
         self,
@@ -1168,8 +1163,8 @@ class RelativeGoalObservation(ObservationType):
         **kwargs,
     ) -> None:
         """
-        :param normalize: if True, divide positional offsets by position_scale
-        :param position_scale: normalization divisor for dx_body and dy_body
+        :param normalize: 为 True 时，将位置偏移除以 position_scale
+        :param position_scale: dx_body 和 dy_body 的归一化除数
         """
         super().__init__(env)
         self.normalize = normalize

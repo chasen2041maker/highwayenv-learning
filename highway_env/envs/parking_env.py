@@ -21,37 +21,33 @@ from highway_env.vehicle.objects import Landmark, Obstacle
 
 class GoalEnv(Env):
     """
-    Interface for A goal-based environment.
+    基于目标的环境接口。
 
-    This interface is needed by agents such as Stable Baseline3's Hindsight Experience Replay (HER) agent.
-    It was originally part of https://github.com/openai/gym, but was later moved
-    to https://github.com/Farama-Foundation/gym-robotics. We cannot add gym-robotics to this project's dependencies,
-    since it does not have an official PyPi package, PyPi does not allow direct dependencies to git repositories.
-    So instead, we just reproduce the interface here.
+    Stable Baselines3 的事后经验回放（HER）等智能体需要此接口。
+    它最初属于 https://github.com/openai/gym，后来移至
+    https://github.com/Farama-Foundation/gym-robotics。
+    原实现说明：当时 gym-robotics 没有正式 PyPI 包，而 PyPI 不允许直接依赖 Git 仓库，
+    因此这里复现接口，而不将 gym-robotics 加入依赖。
 
-    A goal-based environment. It functions just as any regular OpenAI Gym environment but it
-    imposes a required structure on the observation_space. More concretely, the observation
-    space is required to contain at least three elements, namely `observation`, `desired_goal`, and
-    `achieved_goal`. Here, `desired_goal` specifies the goal that the agent should attempt to achieve.
-    `achieved_goal` is the goal that it currently achieved instead. `observation` contains the
-    actual observations of the environment as per usual.
+    这种环境的运行方式与普通 OpenAI Gym 环境相同，但要求观察空间具有指定结构：
+    至少包含 `observation`、`desired_goal` 和 `achieved_goal` 三项。
+    `desired_goal` 表示智能体应尝试达到的目标；`achieved_goal` 表示当前已达到的目标；
+    `observation` 包含通常意义上的环境观察。
     """
 
     @abstractmethod
     def compute_reward(
         self, achieved_goal: np.ndarray, desired_goal: np.ndarray, info: dict
     ) -> float:
-        """Compute the step reward. This externalizes the reward function and makes
-        it dependent on a desired goal and the one that was achieved. If you wish to include
-        additional rewards that are independent of the goal, you can include the necessary values
-        to derive it in 'info' and compute it accordingly.
+        """计算单步奖励。将奖励函数独立出来，使其由期望目标与实际达到的目标共同决定。
+        若还需加入与目标无关的奖励，可在 info 中提供必要数据并据此计算。
+
         Args:
-            achieved_goal (object): the goal that was achieved during execution
-            desired_goal (object): the desired goal that we asked the agent to attempt to achieve
-            info (dict): an info dictionary with additional information
+            achieved_goal (object): 执行过程中实际达到的目标
+            desired_goal (object): 希望智能体尝试达到的目标
+            info (dict): 包含附加信息的字典
         Returns:
-            float: The reward that corresponds to the provided achieved goal w.r.t. to the desired
-            goal. Note that the following should always hold true:
+            float: 实际目标相对于期望目标所对应的奖励。原接口示例应满足：
                 ob, reward, done, info = env.step()
                 assert reward == env.compute_reward(ob['achieved_goal'], ob['desired_goal'], info)
         """
@@ -60,17 +56,16 @@ class GoalEnv(Env):
 
 class ParkingEnv(AbstractEnv, GoalEnv):
     """
-    A continuous control environment.
+    连续控制环境。
 
-    It implements a reach-type task, where the agent observes their position and speed and must
-    control their acceleration and steering so as to reach a given goal.
+    实现到达目标的任务：智能体观察自身位置和速度，通过控制加速度和转向到达指定目标。
 
-    Credits to Munir Jojo-Verge for the idea and initial implementation.
+    感谢 Munir Jojo-Verge 提出思路并完成最初实现。
     """
 
-    # For parking env with GrayscaleObservation, the env need
-    # this PARKING_OBS to calculate the reward and the info.
-    # Bug fixed by Mcfly(https://github.com/McflyWZX)
+    # 泊车环境使用 GrayscaleObservation 时，
+    # 仍需利用 PARKING_OBS 计算奖励和附加信息。
+    # 此问题由 Mcfly 修复：https://github.com/McflyWZX
     PARKING_OBS = {
         "observation": {
             "type": "KinematicsGoal",
@@ -117,7 +112,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
 
     def define_spaces(self) -> None:
         """
-        Set the types and spaces of observation and action from config.
+        根据配置设置观察和动作的类型及空间。
         """
         super().define_spaces()
         self.observation_type_parking = observation_factory(
@@ -143,9 +138,9 @@ class ParkingEnv(AbstractEnv, GoalEnv):
 
     def _create_road(self, spots: int = 14) -> None:
         """
-        Create a road composed of straight adjacent lanes.
+        创建由相邻直线车道组成的道路。
 
-        :param spots: number of spots in the parking
+        :param spots: 停车位数量
         """
         net = RoadNetwork()
         width = 4.0
@@ -180,10 +175,10 @@ class ParkingEnv(AbstractEnv, GoalEnv):
         )
 
     def _create_vehicles(self) -> None:
-        """Create some new random vehicles of a given type, and add them on the road."""
+        """随机创建指定类型的车辆，并将其加入道路。"""
         empty_spots = list(self.road.network.lanes_dict().keys())
 
-        # Controlled vehicles
+        # 受控车辆
         self.controlled_vehicles = []
         for i in range(self.config["controlled_vehicles"]):
             x0 = float(i - self.config["controlled_vehicles"] // 2) * 10.0
@@ -195,7 +190,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
             self.controlled_vehicles.append(vehicle)
             empty_spots.remove(vehicle.lane_index)
 
-        # Goal
+        # 目标
         for vehicle in self.controlled_vehicles:
             lane_index = empty_spots[self.np_random.choice(np.arange(len(empty_spots)))]
             lane = self.road.network.get_lane(lane_index)
@@ -205,7 +200,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
             self.road.objects.append(vehicle.goal)
             empty_spots.remove(lane_index)
 
-        # Other vehicles
+        # 其他车辆
         for _ in repeat(None, self.config["vehicles_count"]):
             if not empty_spots:
                 continue
@@ -214,7 +209,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
             self.road.vehicles.append(v)
             empty_spots.remove(lane_index)
 
-        # Walls
+        # 围墙
         if self.config["add_walls"]:
             width, height = 70, 42
             for y in [-height / 2, height / 2]:
@@ -236,15 +231,15 @@ class ParkingEnv(AbstractEnv, GoalEnv):
         p: float = 0.5,
     ) -> float:
         """
-        Proximity to the goal is rewarded
+        根据与目标的接近程度给予奖励。
 
-        We use a weighted p-norm
+        使用加权 p 范数。
 
-        :param achieved_goal: the goal that was achieved
-        :param desired_goal: the goal that was desired
-        :param dict info: any supplementary information
-        :param p: the Lp^p norm used in the reward. Use p<1 to have high kurtosis for rewards in [0, 1]
-        :return: the corresponding reward
+        :param achieved_goal: 实际达到的目标
+        :param desired_goal: 期望目标
+        :param dict info: 附加信息
+        :param p: 奖励使用的 Lp^p 范数指数；p<1 时可使 [0,1] 范围内奖励呈现较高峰度
+        :return: 对应的奖励
         """
         return -np.power(
             np.dot(
@@ -275,7 +270,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
         )
 
     def _is_terminated(self) -> bool:
-        """The episode is over if the ego vehicle crashed or the goal is reached or time is over."""
+        """自车碰撞、到达目标或时间耗尽时，本回合结束。"""
         crashed = any(vehicle.crashed for vehicle in self.controlled_vehicles)
         obs = self.observation_type_parking.observe()
         obs = obs if isinstance(obs, tuple) else (obs,)
@@ -286,7 +281,7 @@ class ParkingEnv(AbstractEnv, GoalEnv):
         return bool(crashed or success)
 
     def _is_truncated(self) -> bool:
-        """The episode is truncated if the time is over."""
+        """时间耗尽时截断本回合。"""
         return self.time >= self.config["duration"]
 
 

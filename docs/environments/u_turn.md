@@ -43,7 +43,7 @@ See {ref}`road-neighbour-vehicles` for details.
     },
     "screen_width": 789,
     "screen_height": 289,
-    "duration": 10,  # [s]
+    "duration": 10,  # 单位：秒
     "collision_reward": -1.0,
     "left_lane_reward": 0.1,
     "high_speed_reward": 0.4,

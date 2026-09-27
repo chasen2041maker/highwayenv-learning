@@ -108,7 +108,7 @@ env = gym.make("highway-v0", config={
 env.reset()
 done = False
 while not done:
-    env.step(env.action_space.sample())  # with manual control, these actions are ignored
+    env.step(env.action_space.sample())  # 手动控制时，这些动作会被忽略
 ```
 
 The ego-vehicle is controlled by directional arrows keys, as defined in

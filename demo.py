@@ -64,6 +64,7 @@ try:
             action = 1
             decision = "保持当前目标速度"
 
+        print("本轮判断用的前车距离：", round(nearest_distance, 1), "米")
         print(decision)
 
 

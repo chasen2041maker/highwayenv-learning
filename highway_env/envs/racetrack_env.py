@@ -14,15 +14,14 @@ from highway_env.vehicle.objects import Obstacle
 
 class RacetrackEnv(AbstractEnv):
     """
-    A continuous control environment.
+    连续控制环境。
 
-    The agent needs to learn two skills:
-    - follow the tracks
-    - avoid collisions with other vehicles
+    智能体需要学习两项技能：
+    - 沿赛道行驶；
+    - 避免与其他车辆碰撞。
 
-    Credits and many thanks to @supperted825 for the idea and
-    initial implementation.
-    See https://github.com/Farama-Foundation/HighwayEnv/issues/231
+    感谢 @supperted825 提出思路并完成最初实现。
+    参见 https://github.com/Farama-Foundation/HighwayEnv/issues/231
     """
 
     @classmethod
@@ -97,11 +96,11 @@ class RacetrackEnv(AbstractEnv):
     def _make_road(self) -> None:
         net = RoadNetwork()
 
-        # Set Speed Limits for Road Sections - Straight, Turn20, Straight,
-        # Turn 15, Turn15, Straight, Turn25x2, Turn18
+        # 设置各路段限速，路段顺序为：直线、半径 20 的弯道、直线、
+        # 半径 15 的弯道、半径 15 的弯道、直线、两段半径 25 的弯道、半径 18.5 的弯道。
         speedlimits = [None, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
-        # Initialise First Lane
+        # 初始化第一条车道。
         lane = StraightLane(
             [42, 0],
             [100, 0],
@@ -111,7 +110,7 @@ class RacetrackEnv(AbstractEnv):
         )
         self.lane = lane
 
-        # Add Lanes to Road Network - Straight Section
+        # 向道路网络添加车道：直线路段。
         net.add_lane("a", "b", lane)
         net.add_lane(
             "a",
@@ -125,7 +124,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 2 - Circular Arc #1
+        # 第 2 段：圆弧 1
         center1 = [100, -20]
         radii1 = 20
         net.add_lane(
@@ -157,7 +156,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 3 - Vertical Straight
+        # 第 3 段：竖直直线
         net.add_lane(
             "c",
             "d",
@@ -181,7 +180,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 4 - Circular Arc #2
+        # 第 4 段：圆弧 2
         center2 = [105, -30]
         radii2 = 15
         net.add_lane(
@@ -213,7 +212,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 5 - Circular Arc #3
+        # 第 5 段：圆弧 3
         center3 = [70, -30]
         radii3 = 15
         net.add_lane(
@@ -245,7 +244,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 6 - Slant
+        # 第 6 段：斜线
         net.add_lane(
             "f",
             "g",
@@ -269,7 +268,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 7 - Circular Arc #4 - Bugs out when arc is too large, thus 2 sections
+        # 第 7 段：圆弧 4。圆弧过大时会出问题，因此拆成两段。
         center4 = [18.1, -18.1]
         radii4 = 25
         net.add_lane(
@@ -329,7 +328,7 @@ class RacetrackEnv(AbstractEnv):
             ),
         )
 
-        # 8 - Circular Arc #5 - Reconnects to Start
+        # 第 8 段：圆弧 5，重新连接起点。
         center5 = [43.2, 23.4]
         radii5 = 18.5
         net.add_lane(
@@ -373,12 +372,11 @@ class RacetrackEnv(AbstractEnv):
 
     def _make_vehicles(self) -> None:
         """
-        Populate a road with several vehicles on the highway and
-        on the merging lane, as well as an ego-vehicle.
+        在高速公路和汇入车道上放置若干其他车辆及自车。
         """
         rng = self.np_random
 
-        # Controlled vehicles
+        # 受控车辆
         self.controlled_vehicles = []
         for i in range(self.config["controlled_vehicles"]):
             lane_index = (
@@ -394,7 +392,7 @@ class RacetrackEnv(AbstractEnv):
             self.road.vehicles.append(controlled_vehicle)
 
         if self.config["other_vehicles"] > 0:
-            # Front vehicle
+            # 前方车辆
             vehicle = IDMVehicle.make_on_lane(
                 self.road,
                 ("b", "c", lane_index[-1]),
@@ -405,7 +403,7 @@ class RacetrackEnv(AbstractEnv):
             )
             self.road.vehicles.append(vehicle)
 
-            # Other vehicles
+            # 其他车辆
             for _ in repeat(None, rng.integers(self.config["other_vehicles"])):
                 rand_lane_index = self.road.network.random_lane_index(rng)
 
@@ -417,7 +415,7 @@ class RacetrackEnv(AbstractEnv):
                     ),
                     speed=6.0 + rng.uniform(high=3.0),
                 )
-                # Prevent early collisions
+                # 避免刚开始就发生碰撞。
                 for v in self.road.vehicles:
                     if np.linalg.norm(vehicle.position - v.position) < 20:
                         break
@@ -431,9 +429,9 @@ class ConnectedLaneRacetrackEnv(ConnectedLaneNeighboursMixin, RacetrackEnv):
 
 class RacetrackEnvLarge(RacetrackEnv):
     """
-    A larger racetrack map, with three lanes
+    具有三条车道的更大赛道地图。
 
-    credit: @m-walters
+    贡献者：@m-walters
     """
 
     def _make_road(self) -> None:
@@ -442,7 +440,7 @@ class RacetrackEnvLarge(RacetrackEnv):
         w2 = 2 * w
         default_speedlimit = self.config["speed_limit"]
 
-        # Initialise First Lane
+        # 初始化第一条车道。
         lane = StraightLane(
             [42, 0],
             [200, 0],
@@ -452,7 +450,7 @@ class RacetrackEnvLarge(RacetrackEnv):
         )
         self.lane = lane
 
-        # Add Lanes to Road Network - Straight Section
+        # 向道路网络添加车道：直线路段。
         net.add_lane("a", "b", lane)
         net.add_lane(
             "a",
@@ -477,7 +475,7 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 2 - Circular Arc #1
+        # 第 2 段：圆弧 1
         center1 = [200, -20]
         radii1 = 20
         net.add_lane(
@@ -523,8 +521,8 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 3 - Vertical Straight
-        delta_extension = -1.0  # Better join
+        # 第 3 段：竖直直线
+        delta_extension = -1.0  # 改善连接处。
         net.add_lane(
             "c",
             "d",
@@ -559,7 +557,7 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 4 - Circular Arc #2
+        # 第 4 段：圆弧 2
         center4 = [205, -60]
         radii4 = 15
         net.add_lane(
@@ -605,7 +603,7 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 5 - Circular Arc #3
+        # 第 5 段：圆弧 3
         center5 = [170, -60]
         radii5 = 15
         net.add_lane(
@@ -651,8 +649,8 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 6 - Slant
-        # Extending [-30,-30]
+        # 第 6 段：斜线
+        # 向 [-30, -30] 方向延伸。
         extend = np.array([-30, -30])
         start6 = np.array([155.7, -45.7])
         end6 = np.array([135.7, -65.7]) + extend
@@ -704,8 +702,8 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 7 - Circular Arc #4
-        # Reflect it with the slant
+        # 第 7 段：圆弧 4
+        # 以斜线为参照进行镜像。
         center7 = np.array([118.1, -48.1]) + extend
         radii7 = 25
         theta7 = 317
@@ -718,7 +716,7 @@ class RacetrackEnvLarge(RacetrackEnv):
                 center7,
                 radii7,
                 np.deg2rad(theta7),
-                np.deg2rad(theta7_end - 3),  # nicer
+                np.deg2rad(theta7_end - 3),  # 使连接更平顺。
                 width=w,
                 clockwise=False,
                 line_types=(LineType.CONTINUOUS, LineType.NONE),
@@ -754,8 +752,8 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 8 - Next slant
-        # Reflected from the last arc's center
+        # 第 8 段：下一段斜线
+        # 相对于上一段圆弧的圆心进行镜像。
         start8 = np.array(
             [
                 center7[0] + radii7 * np.cos(np.deg2rad(theta7_end)),
@@ -775,7 +773,7 @@ class RacetrackEnvLarge(RacetrackEnv):
             ]
         )
 
-        # We preemptively take section 9's radius to make a nice join.
+        # 提前采用第 9 段的半径，使连接更平顺。
         radii9 = 15
         rad = np.deg2rad(30)
         end8 = np.array([42 - radii9 * np.cos(rad), -radii9 - radii9 * np.sin(rad)])
@@ -819,8 +817,8 @@ class RacetrackEnvLarge(RacetrackEnv):
             ),
         )
 
-        # 9 - Circular arc 7, end
-        # Since y2 = 0...
+        # 第 9 段：圆弧 7，终段
+        # 由于 y2 = 0……
         center9 = np.array([42, -radii9])
         net.add_lane(
             "i",
@@ -857,7 +855,7 @@ class RacetrackEnvLarge(RacetrackEnv):
                 center9,
                 radii9 + w2,
                 np.deg2rad(212),
-                np.deg2rad(88),  # nicer join
+                np.deg2rad(88),  # 更平顺的连接
                 width=w,
                 clockwise=False,
                 line_types=(LineType.NONE, LineType.CONTINUOUS),
@@ -881,14 +879,14 @@ class ConnectedLaneRacetrackEnvLarge(ConnectedLaneNeighboursMixin, RacetrackEnvL
 
 class RacetrackEnvOval(RacetrackEnv):
     """
-    Oval-shaped racetrack with customizable parameters:
+    参数可配置的椭圆形赛道。
 
-    Key additional features:
-    - Customizable number of lanes.
-    - Adjustable length of horizontal straight segments.
-    - Optional roadblocks to enforce strategic lane changes.
+    主要扩展功能：
+    - 自定义车道数量；
+    - 调整水平直线路段的长度；
+    - 可选路障，用于要求智能体作出变道决策。
 
-    credit: @christophluther
+    贡献者：@christophluther
     """
 
     @classmethod
@@ -925,10 +923,10 @@ class RacetrackEnvOval(RacetrackEnv):
                 "centering_position": [0.5, 0.5],
                 "speed_limit": 10.0,
                 "terminate_off_road": True,
-                "length": 100,  # 0: random number from [100,200]
-                "no_lanes": 3,  # 0: random number from [2,7]
-                "block_lane": False,  # block middle lane
-                "force_decision": False,  # block 1st and 3rd lane
+                "length": 100,  # 设为 0 时，从 [100, 200] 中随机取值。
+                "no_lanes": 3,  # 设为 0 时，从 [2, 7] 中随机取值。
+                "block_lane": False,  # 封堵中间车道。
+                "force_decision": False,  # 封堵第 1 和第 3 条车道。
             },
         )
         return config
@@ -936,13 +934,13 @@ class RacetrackEnvOval(RacetrackEnv):
     def _make_road(self) -> None:
         net = RoadNetwork()
 
-        # define rng
+        # 定义随机数生成器。
         rng = np.random.default_rng()
 
-        # Set Speed Limits for Road Sections
+        # 设置各路段的限速。
         speedlimits = [None, 10, 10, 10, 10, 10, 10, 10, 10]
 
-        # define length,
+        # 定义长度。
         if self.config["length"] == 0:
             length = rng.integers(100, high=200)
         else:
@@ -953,7 +951,7 @@ class RacetrackEnvOval(RacetrackEnv):
         else:
             no_lanes = self.config["no_lanes"]
 
-        # Lane 1: Initialise First Inner Lane
+        # 直线段 1：初始化最内侧车道。
         lane = StraightLane(
             [0, 0],
             [length + 1, 0],
@@ -963,12 +961,12 @@ class RacetrackEnvOval(RacetrackEnv):
         )
         self.lane = lane
 
-        # successively add lanes
+        # 依次添加车道。
         net.add_lane("a", "b", lane)
 
-        # Loop must be separate for every segment to introduce segment names
+        # 各路段须使用独立循环，以便设置路段名称。
         for i in range(1, no_lanes - 1):
-            # add additional lanes between inner and outer lane
+            # 在内侧和外侧车道之间添加车道。
             net.add_lane(
                 "a",
                 "b",
@@ -981,7 +979,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Lane 1: Outer Lane
+        # 直线段 1：外侧车道
         net.add_lane(
             "a",
             "b",
@@ -994,7 +992,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Turn 1: Inner Lane
+        # 弯道 1：内侧车道
         center1 = [length, -20]
         radii1 = 20
         net.add_lane(
@@ -1013,7 +1011,7 @@ class RacetrackEnvOval(RacetrackEnv):
         )
 
         for i in range(1, no_lanes - 1):
-            # add additional lanes between inner and outer lane
+            # 在内侧和外侧车道之间添加车道。
             net.add_lane(
                 "b",
                 "c",
@@ -1029,7 +1027,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Turn 1: Outer Lane
+        # 弯道 1：外侧车道
         net.add_lane(
             "b",
             "c",
@@ -1045,7 +1043,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Vertical Straight 1: Inner Lane
+        # 竖直直线段 1：内侧车道
         net.add_lane(
             "c",
             "d",
@@ -1059,7 +1057,7 @@ class RacetrackEnvOval(RacetrackEnv):
         )
 
         for i in range(1, no_lanes - 1):
-            # add additional lanes between inner and outer lane
+            # 在内侧和外侧车道之间添加车道。
             net.add_lane(
                 "c",
                 "d",
@@ -1072,7 +1070,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Vertical Straight 1: Outer Lane
+        # 竖直直线段 1：外侧车道
         net.add_lane(
             "c",
             "d",
@@ -1085,7 +1083,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Turn 2: Inner Lane
+        # 弯道 2：内侧车道
         center2 = [length + 5, -50]
         radii2 = 15
         net.add_lane(
@@ -1104,7 +1102,7 @@ class RacetrackEnvOval(RacetrackEnv):
         )
 
         for i in range(1, no_lanes - 1):
-            # add additional lanes between inner and outer lane
+            # 在内侧和外侧车道之间添加车道。
             net.add_lane(
                 "d",
                 "e",
@@ -1120,7 +1118,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Turn 2: Outer Lane
+        # 弯道 2：外侧车道
         net.add_lane(
             "d",
             "e",
@@ -1136,7 +1134,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Horizontal Straight 2: Inner Lane
+        # 水平直线段 2：内侧车道
         net.add_lane(
             "e",
             "f",
@@ -1150,7 +1148,7 @@ class RacetrackEnvOval(RacetrackEnv):
         )
 
         for i in range(1, no_lanes - 1):
-            # add additional lanes between inner and outer lane
+            # 在内侧和外侧车道之间添加车道。
             net.add_lane(
                 "e",
                 "f",
@@ -1163,7 +1161,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Horizontal Straight 2: Outer Lane
+        # 水平直线段 2：外侧车道
         net.add_lane(
             "e",
             "f",
@@ -1176,7 +1174,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Turn 3: Inner Lane
+        # 弯道 3：内侧车道
         center4 = [-5, -50]
         radii4 = 15
         net.add_lane(
@@ -1210,7 +1208,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Turn 3: Outer Lane
+        # 弯道 3：外侧车道
         net.add_lane(
             "f",
             "g",
@@ -1226,7 +1224,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Vertical Straight 2: Inner Lane
+        # 竖直直线段 2：内侧车道
         net.add_lane(
             "g",
             "h",
@@ -1252,7 +1250,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Vertical Straight 2: Outer Lane
+        # 竖直直线段 2：外侧车道
         net.add_lane(
             "g",
             "h",
@@ -1265,7 +1263,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ),
         )
 
-        # Turn 4: Inner Lane
+        # 弯道 4：内侧车道
         center6 = [0, -20]
         radii6 = 20
         net.add_lane(
@@ -1299,7 +1297,7 @@ class RacetrackEnvOval(RacetrackEnv):
                 ),
             )
 
-        # Turn 4: Outer Lane
+        # 弯道 4：外侧车道
         net.add_lane(
             "h",
             "a",
@@ -1324,7 +1322,7 @@ class RacetrackEnvOval(RacetrackEnv):
             ],
         )
 
-        # Scenario to force a "binary" decision
+        # 要求作出二选一决策的场景。
         if self.config["block_lane"]:
             for i in [40.0, 43.0, 46.0, 49.0]:
                 road.objects.append(Obstacle(road, [length - i, 3.75]))
@@ -1336,16 +1334,16 @@ class RacetrackEnvOval(RacetrackEnv):
 
         self.road = road
 
-    # CL adjusted to number of lanes
+    # 根据车道数量调整 CL。
     def _make_vehicles(self) -> None:
         """
-        Populate a road with several vehicles.
+        在道路上放置若干车辆。
         """
         rng = self.np_random
 
-        # Controlled vehicles
+        # 受控车辆
         self.controlled_vehicles = []
-        # Number of lanes
+        # 车道数量
         no_lanes = self.config["no_lanes"]
 
         for i in range(self.config["controlled_vehicles"]):
@@ -1362,7 +1360,7 @@ class RacetrackEnvOval(RacetrackEnv):
             self.road.vehicles.append(controlled_vehicle)
 
         if self.config["other_vehicles"] > 0:
-            # Front vehicle
+            # 前方车辆
             vehicle = IDMVehicle.make_on_lane(
                 self.road,
                 ("b", "c", lane_index[-1]),
@@ -1373,7 +1371,7 @@ class RacetrackEnvOval(RacetrackEnv):
             )
             self.road.vehicles.append(vehicle)
 
-            # Other vehicles
+            # 其他车辆
             for _ in repeat(None, rng.integers(self.config["other_vehicles"])):
                 rand_lane_index = self.road.network.random_lane_index(rng)
                 vehicle = IDMVehicle.make_on_lane(
@@ -1384,7 +1382,7 @@ class RacetrackEnvOval(RacetrackEnv):
                     ),
                     speed=6.0 + rng.uniform(high=3.0),
                 )
-                # Prevent early collisions
+                # 避免刚开始就发生碰撞。
                 for v in self.road.vehicles:
                     if np.linalg.norm(vehicle.position - v.position) < 20.0:
                         break

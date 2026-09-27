@@ -13,7 +13,7 @@ def train_env():
                 "type": "GrayscaleObservation",
                 "observation_shape": (128, 64),
                 "stack_size": 4,
-                "weights": [0.2989, 0.5870, 0.1140],  # weights for RGB conversion
+                "weights": [0.2989, 0.5870, 0.1140],  # RGB 转换的权重
                 "scaling": 1.75,
             },
         },
@@ -30,7 +30,7 @@ def test_env():
 
 
 if __name__ == "__main__":
-    # Train
+    # 训练
     model = DQN(
         "CnnPolicy",
         DummyVecEnv([train_env]),
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     model.learn(total_timesteps=int(1e5))
     model.save("highway_cnn/model")
 
-    # Record video
+    # 录制视频
     model = DQN.load("highway_cnn/model")
 
     env = DummyVecEnv([test_env])

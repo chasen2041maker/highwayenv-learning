@@ -7,7 +7,7 @@ import highway_env  # noqa: F401
 
 
 # ==================================
-#        Main script
+# 主程序
 # ==================================
 
 if __name__ == "__main__":
@@ -28,9 +28,9 @@ if __name__ == "__main__":
             verbose=2,
             tensorboard_log="highway_ppo/",
         )
-        # Train the agent
+        # 训练智能体
         model.learn(total_timesteps=int(2e4))
-        # Save the agent
+        # 保存智能体
         model.save("highway_ppo/model")
 
     model = PPO.load("highway_ppo/model")

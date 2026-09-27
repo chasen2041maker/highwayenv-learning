@@ -57,11 +57,11 @@ Diff coverage only applies to lines you add or modify in `highway_env/`; it does
 Run the same checks locally before opening a PR:
 
 ```bash
-just coverage                              # both checks (diff vs origin/main)
-just coverage-total                        # ≥ 85% on highway_env
-just coverage-diff                         # ≥ 80% on changed highway_env lines
-just coverage-diff upstream                # diff vs upstream/main
-just coverage-diff upstream my-feature     # diff vs upstream/my-feature
+just coverage                              # 同时检查总覆盖率与差异覆盖率（对比 origin/main）
+just coverage-total                        # highway_env 的覆盖率至少为 85%
+just coverage-diff                         # highway_env 改动行的覆盖率至少为 80%
+just coverage-diff upstream                # 对比 upstream/main 的差异
+just coverage-diff upstream my-feature     # 对比 upstream/my-feature 的差异
 ```
 
 Pass `remote` and `branch` as positional arguments (`just coverage-diff upstream my-feature`).

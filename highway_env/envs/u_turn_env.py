@@ -11,8 +11,8 @@ from highway_env.vehicle.controller import MDPVehicle
 
 class UTurnEnv(AbstractEnv):
     """
-    U-Turn risk analysis task: the agent overtakes vehicles that are blocking the
-    traffic. High speed overtaking must be balanced with ensuring safety.
+    掉头风险分析任务：智能体超越阻碍通行的车辆。
+    需要在高速超车与保证安全之间作出权衡。
     """
 
     @classmethod
@@ -26,9 +26,9 @@ class UTurnEnv(AbstractEnv):
                 "screen_width": 789,
                 "screen_height": 289,
                 "duration": 10,
-                "collision_reward": -1.0,  # Penalization received for vehicle collision.
-                "left_lane_reward": 0.1,  # Reward received for maintaining left most lane.
-                "high_speed_reward": 0.4,  # Reward received for maintaining cruising speed.
+                "collision_reward": -1.0,  # 车辆碰撞时的惩罚。
+                "left_lane_reward": 0.1,  # 保持在最左侧车道时的奖励。
+                "high_speed_reward": 0.4,  # 保持巡航速度时的奖励。
                 "reward_speed_range": [8, 24],
                 "normalize_reward": True,
                 "offroad_terminal": False,
@@ -38,9 +38,9 @@ class UTurnEnv(AbstractEnv):
 
     def _reward(self, action: int) -> float:
         """
-        The vehicle is rewarded for driving with high speed and collision avoidance.
-        :param action: the action performed
-        :return: the reward of the state-action transition
+        奖励车辆高速行驶并避免碰撞。
+        :param action: 执行的动作
+        :return: 此次状态和动作转移对应的奖励
         """
         rewards = self._rewards(action)
         reward = sum(
@@ -83,13 +83,13 @@ class UTurnEnv(AbstractEnv):
 
     def _make_road(self, length=128):
         """
-        Making double lane road with counter-clockwise U-Turn.
-        :return: the road
+        创建带逆时针掉头弯道的双车道道路。
+        :return: 道路
         """
         net = RoadNetwork()
 
-        # Defining upper starting lanes after the U-Turn.
-        # These Lanes are defined from x-coordinate 'length' to 0.
+        # 定义掉头后的上方直线车道。
+        # 这些车道的 x 坐标从 length 延伸到 0。
         net.add_lane(
             "c",
             "d",
@@ -109,10 +109,10 @@ class UTurnEnv(AbstractEnv):
             ),
         )
 
-        # Defining counter-clockwise circular U-Turn lanes.
+        # 定义逆时针的圆形掉头车道。
         center = [length, StraightLane.DEFAULT_WIDTH + 20]  # [m]
         radius = 20  # [m]
-        alpha = 0  # [deg]
+        alpha = 0  # 单位：角度
 
         radii = [radius, radius + StraightLane.DEFAULT_WIDTH]
         n, c, s = LineType.NONE, LineType.CONTINUOUS, LineType.STRIPED
@@ -133,8 +133,8 @@ class UTurnEnv(AbstractEnv):
 
         offset = 2 * radius
 
-        # Defining lower starting lanes before the U-Turn.
-        # These Lanes are defined from x-coordinate 0 to 'length'.
+        # 定义掉头前的下方直线车道。
+        # 这些车道的 x 坐标从 0 延伸到 length。
         net.add_lane(
             "a",
             "b",
@@ -178,13 +178,12 @@ class UTurnEnv(AbstractEnv):
 
     def _make_vehicles(self) -> None:
         """
-        Strategic addition of vehicles for testing safety behavior limits
-        while performing U-Turn manoeuvre at given cruising interval.
+        有针对性地添加车辆，测试在给定巡航区间内进行掉头时的安全行为边界。
 
-        :return: the ego-vehicle
+        :return: 自车
         """
 
-        # These variables add small variations to the driving behavior.
+        # 这些变量为驾驶行为引入小幅变化。
         position_deviation = 2.0
         speed_deviation = 2.0
 
@@ -192,7 +191,7 @@ class UTurnEnv(AbstractEnv):
         ego_vehicle = self.action_type.vehicle_class(
             self.road, ego_lane.position(0, 0), speed=16.0
         )
-        # Stronger anticipation for the turn
+        # 增强对前方弯道的预判。
         ego_vehicle.PURSUIT_TAU = MDPVehicle.TAU_HEADING
         try:
             ego_vehicle.plan_route_to("d")
@@ -204,10 +203,10 @@ class UTurnEnv(AbstractEnv):
 
         vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
 
-        # Note: randomize_behavior() can be commented out if more randomized
-        # vehicle interactions are deemed necessary for the experimentation.
+        # 原注释说明：若实验需要调整车辆交互的随机程度，
+        # 可以考虑注释掉 randomize_behavior() 调用。
 
-        # Vehicle 1: Blocking the ego vehicle
+        # 车辆 1：阻挡自车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("a", "b", 0),
@@ -218,7 +217,7 @@ class UTurnEnv(AbstractEnv):
         vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Vehicle 2: Forcing risky overtake
+        # 车辆 2：迫使自车进行风险较高的超车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("a", "b", 1),
@@ -229,7 +228,7 @@ class UTurnEnv(AbstractEnv):
         # vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Vehicle 3: Blocking the ego vehicle
+        # 车辆 3：阻挡自车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("b", "c", 1),
@@ -240,7 +239,7 @@ class UTurnEnv(AbstractEnv):
         # vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Vehicle 4: Forcing risky overtake
+        # 车辆 4：迫使自车进行风险较高的超车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("b", "c", 0),
@@ -251,7 +250,7 @@ class UTurnEnv(AbstractEnv):
         # vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Vehicle 5: Blocking the ego vehicle
+        # 车辆 5：阻挡自车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("c", "d", 0),
@@ -262,7 +261,7 @@ class UTurnEnv(AbstractEnv):
         # vehicle.randomize_behavior()
         self.road.vehicles.append(vehicle)
 
-        # Vehicle 6: Forcing risky overtake
+        # 车辆 6：迫使自车进行风险较高的超车
         vehicle = vehicles_type.make_on_lane(
             self.road,
             ("c", "d", 1),

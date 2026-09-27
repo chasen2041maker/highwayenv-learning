@@ -38,15 +38,15 @@ class VehicleGraphics:
         draw_roof: bool = False,
     ) -> None:
         """
-        Display a vehicle on a pygame surface.
+        在 pygame 绘图表面上显示车辆。
 
-        The vehicle is represented as a colored rotated rectangle.
+        用带颜色、可旋转的矩形表示车辆。
 
-        :param vehicle: the vehicle to be drawn
-        :param surface: the surface to draw the vehicle on
-        :param transparent: whether the vehicle should be drawn slightly transparent
-        :param offscreen: whether the rendering should be done offscreen or not
-        :param label: whether a text label should be rendered
+        :param vehicle: 待绘制的车辆
+        :param surface: 绘制车辆的表面
+        :param transparent: 是否将车辆绘制为略微透明
+        :param offscreen: 是否采用离屏渲染
+        :param label: 是否绘制文字标签
         """
         if not surface.is_visible(vehicle.position):
             return
@@ -56,11 +56,11 @@ class VehicleGraphics:
         headlight_length, headlight_width = 0.72, 0.6
         roof_length, roof_width = 2.0, 1.5
 
-        # Vehicle rectangle
+        # 车辆矩形
         length = v.LENGTH + 2 * tire_length
         vehicle_surface = pygame.Surface(
             (surface.pix(length), surface.pix(length)), flags=pygame.SRCALPHA
-        )  # per-pixel alpha
+        )  # 逐像素透明度
         rect = (
             surface.pix(tire_length),
             surface.pix(length / 2 - v.WIDTH / 2),
@@ -93,7 +93,7 @@ class VehicleGraphics:
             pygame.draw.rect(vehicle_surface, cls.darken(color), rect_roof, 0)
         pygame.draw.rect(vehicle_surface, cls.BLACK, rect, 1)
 
-        # Tires
+        # 轮胎
         if type(vehicle) in [Vehicle, BicycleVehicle]:
             tire_positions = [
                 [surface.pix(tire_length), surface.pix(length / 2 - v.WIDTH / 2)],
@@ -129,16 +129,16 @@ class VehicleGraphics:
                     np.rad2deg(-tire_angle),
                 )
 
-        # Centered rotation
+        # 绕中心旋转
         h = v.heading if abs(v.heading) > 2 * np.pi / 180 else 0
         position = [*surface.pos2pix(v.position[0], v.position[1])]
         if not offscreen:
-            # convert_alpha throws errors in offscreen mode
-            # see https://stackoverflow.com/a/19057853
+            # 离屏模式下调用 convert_alpha 会报错。
+            # 参见 https://stackoverflow.com/a/19057853
             vehicle_surface = pygame.Surface.convert_alpha(vehicle_surface)
         cls.blit_rotate(surface, vehicle_surface, position, np.rad2deg(-h))
 
-        # Label
+        # 文字标签
         if label:
             font = pygame.font.Font(None, 15)
             text = f"#{id(v) % 1000}"
@@ -154,8 +154,8 @@ class VehicleGraphics:
         origin_pos: Vector = None,
         show_rect: bool = False,
     ) -> None:
-        """Many thanks to https://stackoverflow.com/a/54714144."""
-        # calculate the axis aligned bounding box of the rotated image
+        """感谢此回答提供的方法：https://stackoverflow.com/a/54714144。"""
+        # 计算旋转图像的轴对齐包围盒。
         w, h = image.get_size()
         box = [pygame.math.Vector2(p) for p in [(0, 0), (w, 0), (w, -h), (0, -h)]]
         box_rotate = [p.rotate(angle) for p in box]
@@ -168,23 +168,23 @@ class VehicleGraphics:
             max(box_rotate, key=lambda p: p[1])[1],
         )
 
-        # calculate the translation of the pivot
+        # 计算旋转支点的平移量。
         if origin_pos is None:
             origin_pos = w / 2, h / 2
         pivot = pygame.math.Vector2(origin_pos[0], -origin_pos[1])
         pivot_rotate = pivot.rotate(angle)
         pivot_move = pivot_rotate - pivot
 
-        # calculate the upper left origin of the rotated image
+        # 计算旋转图像左上角的位置。
         origin = (
             pos[0] - origin_pos[0] + min_box[0] - pivot_move[0],
             pos[1] - origin_pos[1] - max_box[1] + pivot_move[1],
         )
-        # get a rotated image
+        # 获取旋转后的图像。
         rotated_image = pygame.transform.rotate(image, angle)
-        # rotate and blit the image
+        # 旋转并绘制图像。
         surf.blit(rotated_image, origin)
-        # draw rectangle around the image
+        # 在图像外围绘制矩形。
         if show_rect:
             pygame.draw.rect(surf, (255, 0, 0), (*origin, *rotated_image.get_size()), 2)
 
@@ -193,11 +193,11 @@ class VehicleGraphics:
         cls, states: list[Vehicle], surface: WorldSurface, offscreen: bool = False
     ) -> None:
         """
-        Display the whole trajectory of a vehicle on a pygame surface.
+        在 pygame 绘图表面上显示车辆的完整轨迹。
 
-        :param states: the list of vehicle states within the trajectory to be displayed
-        :param surface: the surface to draw the vehicle future states on
-        :param offscreen: whether the rendering should be done offscreen or not
+        :param states: 待显示轨迹中的车辆状态列表
+        :param surface: 绘制车辆未来状态的表面
+        :param offscreen: 是否采用离屏渲染
         """
         for vehicle in states:
             cls.display(vehicle, surface, transparent=True, offscreen=offscreen)
@@ -213,14 +213,14 @@ class VehicleGraphics:
         offscreen: bool = False,
     ) -> None:
         """
-        Display the whole trajectory of a vehicle on a pygame surface.
+        在 pygame 绘图表面上显示车辆的完整轨迹。
 
-        :param vehicle: the vehicle states within the trajectory to be displayed
-        :param surface: the surface to draw the vehicle future states on
-        :param frequency: frequency of displayed positions in history
-        :param duration: length of displayed history
-        :param simulation: simulation frequency
-        :param offscreen: whether the rendering should be done offscreen or not
+        :param vehicle: 包含待显示轨迹历史状态的车辆
+        :param surface: 绘制车辆状态的表面
+        :param frequency: 历史位置的显示频率
+        :param duration: 显示的历史时长
+        :param simulation: 仿真频率
+        :param offscreen: 是否采用离屏渲染
         """
         for v in itertools.islice(
             vehicle.history,

@@ -25,11 +25,11 @@ from highway_env.road.road import LineType, Road
 generation_params = default_params()
 lanes = generate_random_lanes(rng = np.random.default_rng(), provided_params = generation_params)
 
-## inside env._make_road():
+## 在 env._make_road() 内部：
 
-# We now have a list of Lane that contains the raw geometrical boundary points
-# of our road network + the nodes each lane connects to.
-# We must now construct our RoadNetwork from this
+# 现在得到一个 Lane 列表，其中包含道路网络的原始几何边界点，
+# 以及每条车道连接的节点。
+# 接下来根据这些信息构造 RoadNetwork。
 net = PartitionedRoadNetwork(partition_gridsize=30)
 for lane in lanes:
     real_lane = PolyLane(

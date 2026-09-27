@@ -34,21 +34,21 @@ env = gym.make("highway-v0")
     "vehicles_count": 50,
     "controlled_vehicles": 1,
     "initial_lane_id": None,
-    "duration": 40,  # [s]
+    "duration": 40,  # 单位：秒
     "ego_spacing": 2,
     "vehicles_density": 1,
-    "collision_reward": -1,  # The reward received when colliding with a vehicle.
-    "right_lane_reward": 0.1,  # The reward received when driving on the right-most lanes, linearly mapped to zero for other lanes.
-    "high_speed_reward": 0.4,  # The reward received when driving at full speed, linearly mapped to zero for lower speeds according to config["reward_speed_range"].
-    "lane_change_reward": 0,  # The reward received at each lane change action.
-    "reward_speed_range": [20, 30],  # [m/s] The reward for high speed is mapped linearly from this range to [0, 1].
+    "collision_reward": -1,  # 与车辆发生碰撞时得到的奖励。
+    "right_lane_reward": 0.1,  # 在最右侧车道行驶时获得的奖励，向其他车道线性递减到零。
+    "high_speed_reward": 0.4,  # 以最高奖励速度行驶时的奖励，较低速度按 config["reward_speed_range"] 线性映射。
+    "lane_change_reward": 0,  # 每次变道动作得到的奖励。
+    "reward_speed_range": [20, 30],  # 单位为米/秒；将此速度范围线性映射为 [0, 1] 的高速奖励。
     "normalize_reward": True,
     "offroad_terminal": False,
-    "simulation_frequency": 15,  # [Hz]
-    "policy_frequency": 1,  # [Hz]
+    "simulation_frequency": 15,  # 单位：赫兹
+    "policy_frequency": 1,  # 单位：赫兹
     "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",
-    "screen_width": 600,  # [px]
-    "screen_height": 150,  # [px]
+    "screen_width": 600,  # 单位：像素
+    "screen_height": 150,  # 单位：像素
     "centering_position": [0.3, 0.5],
     "scaling": 5.5,
     "show_trajectories": False,

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 class EnvViewer:
-    """A viewer to render a highway driving environment."""
+    """用于渲染高速公路驾驶环境的查看器。"""
 
     SAVE_IMAGES = False
     agent_display = None
@@ -48,9 +48,9 @@ class EnvViewer:
         pygame.display.set_caption("Highway-env")
         panel_size = (self.config["screen_width"], self.config["screen_height"])
 
-        # A display is not mandatory to draw things. Ignoring the display.set_mode()
-        # instruction allows the drawing to be done on surfaces without
-        # handling a screen display, useful for e.g. cloud computing
+        # 绘图并不一定需要显示窗口。省略 display.set_mode() 调用，
+        # 即可直接在绘图表面上绘制，
+        # 无需处理屏幕窗口，适用于云端计算等场景。
         if not self.offscreen:
             self.screen = pygame.display.set_mode(
                 [self.config["screen_width"], self.config["screen_height"]]
@@ -72,11 +72,11 @@ class EnvViewer:
 
     def set_agent_display(self, agent_display: Callable) -> None:
         """
-        Set a display callback provided by an agent
+        设置智能体提供的绘制回调。
 
-        So that they can render their behaviour on a dedicated agent surface, or even on the simulation surface.
+        智能体可以在专用绘图表面或仿真画面上显示自身行为。
 
-        :param agent_display: a callback provided by the agent to display on surfaces
+        :param agent_display: 智能体提供的表面绘制回调
         """
         if EnvViewer.agent_display is None:
             self.extend_display()
@@ -98,9 +98,9 @@ class EnvViewer:
 
     def set_agent_action_sequence(self, actions: list[Action]) -> None:
         """
-        Set the sequence of actions chosen by the agent, so that it can be displayed
+        设置智能体选择的动作序列，以便将其显示出来。
 
-        :param actions: list of action, following the env's action space specification
+        :param actions: 符合环境动作空间规范的动作列表
         """
         if isinstance(self.env.action_type, DiscreteMetaAction):
             assert self.env.action_type.actions is not None
@@ -122,7 +122,7 @@ class EnvViewer:
             )
 
     def handle_events(self) -> None:
-        """Handle pygame events by forwarding them to the display and environment vehicle."""
+        """处理 pygame 事件，并将其转交给显示组件和环境中的车辆。"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.env.close()
@@ -131,7 +131,7 @@ class EnvViewer:
                 EventHandler.handle_event(self.env.action_type, event)
 
     def display(self) -> None:
-        """Display the road and vehicles on a pygame window."""
+        """在 pygame 窗口中显示道路与车辆。"""
         if not self.enabled:
             return
 
@@ -186,20 +186,20 @@ class EnvViewer:
 
     def get_image(self) -> np.ndarray:
         """
-        The rendered image as a rgb array.
+        以 RGB 数组形式返回渲染图像。
 
-        Gymnasium's channel convention is H x W x C
+        Gymnasium 采用 H × W × C（高、宽、通道）的排列方式。
         """
         surface = (
             self.screen
             if self.config["render_agent"] and not self.offscreen
             else self.sim_surface
         )
-        data = pygame.surfarray.array3d(surface)  # in W x H x C channel convention
+        data = pygame.surfarray.array3d(surface)  # 采用 W × H × C（宽、高、通道）的排列方式
         return np.moveaxis(data, 0, 1)
 
     def window_position(self) -> np.ndarray:
-        """the world position of the center of the displayed window."""
+        """显示窗口中心对应的世界坐标位置。"""
         if self.observer_vehicle:
             return self.observer_vehicle.position
         elif self.env.vehicle:
@@ -208,7 +208,7 @@ class EnvViewer:
             return np.array([0, 0])
 
     def close(self) -> None:
-        """Close the pygame window."""
+        """关闭 pygame 窗口。"""
         pygame.quit()
 
 
@@ -216,10 +216,10 @@ class EventHandler:
     @classmethod
     def handle_event(cls, action_type: ActionType, event: pygame.event.Event) -> None:
         """
-        Map the pygame keyboard events to control decisions
+        将 pygame 键盘事件映射为控制决策。
 
-        :param action_type: the ActionType that defines how the vehicle is controlled
-        :param event: the pygame event
+        :param action_type: 定义车辆控制方式的 ActionType
+        :param event: pygame 事件
         """
         if isinstance(action_type, DiscreteMetaAction):
             cls.handle_discrete_action_event(action_type, event)
@@ -268,8 +268,8 @@ class EventHandler:
 
 
 class ObservationGraphics:
-    LIDAR_COLOR = (0, 0, 0)  # applies to display_grid and display_rays
-    NAV_COLOR = (200, 200, 0)  # display_navigation_arrow
+    LIDAR_COLOR = (0, 0, 0)  # 用于 display_grid 和 display_rays 的显示设置
+    NAV_COLOR = (200, 200, 0)  # 导航箭头显示：display_navigation_arrow
 
     @classmethod
     def display(cls, obs: ObservationType, sim_surface):
@@ -316,7 +316,7 @@ class ObservationGraphics:
     @classmethod
     def display_navigation_arrow(cls, nav_observation: NavigationObservation, surface):
         """
-        Draws a line that shows the next waypoint
+        绘制指向下一个路径点的线段。
         """
         origin = nav_observation.observer_vehicle.position
 

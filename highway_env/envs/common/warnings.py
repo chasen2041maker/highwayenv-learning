@@ -2,7 +2,7 @@ from highway_env import __version__
 
 
 class HighwayEnvExperimentalWarning(FutureWarning):
-    """The environment is still experimental and not stable yet."""
+    """此环境仍处于实验阶段，尚不稳定。"""
 
     template: str = (
         "\033[31mhighway_env.envs:\033[0m The environment [%s] is not yet stable in "

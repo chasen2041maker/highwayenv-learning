@@ -49,7 +49,7 @@ CHECK_ENV_IGNORE_WARNINGS = [
 
 @pytest.mark.parametrize("env_id", highway_env_ids)
 def test_highway_api(env_id):
-    """Check that all environments pass the environment checker with no warnings other than the expected."""
+    """检查所有环境能否通过环境检查器，且仅产生预期警告。"""
     with warnings.catch_warnings(record=True) as caught_warnings:
         env = gym.make(env_id)
         if isinstance(env, MultiAgentWrapper):
@@ -171,7 +171,7 @@ def test_env_vectorization__info_dtype_is_float(env_spec):
     assert np.issubdtype(info["speed"].dtype, np.floating)
 
     zero_action = np.zeros(envs.action_space.shape, envs.action_space.dtype)
-    # run until first environment with longer duration terminates
+    # 运行到时长更长的第一个环境结束
     for _step in range(2):
         _obs, _reward, _terminated, truncated, info = envs.step(zero_action)
         assert np.issubdtype(info["speed"].dtype, np.floating)

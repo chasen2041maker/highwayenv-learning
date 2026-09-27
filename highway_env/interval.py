@@ -12,11 +12,11 @@ from highway_env.utils import ColumnVector, Interval, Matrix, Vector
 
 def intervals_product(a: Interval, b: Interval) -> np.ndarray:
     """
-    Compute the product of two intervals
+    计算两个区间的乘积。
 
-    :param a: interval [a_min, a_max]
-    :param b: interval [b_min, b_max]
-    :return: the interval of their product ab
+    :param a: 区间 [a_min, a_max]
+    :param b: 区间 [b_min, b_max]
+    :return: 乘积 ab 所在的区间
     """
     p = lambda x: np.maximum(x, 0)
     n = lambda x: np.maximum(-x, 0)
@@ -36,11 +36,11 @@ def intervals_product(a: Interval, b: Interval) -> np.ndarray:
 
 def intervals_scaling(a: Interval, b: Interval) -> np.ndarray:
     """
-    Scale an intervals
+    对区间进行缩放。
 
-    :param a: matrix a
-    :param b: interval [b_min, b_max]
-    :return: the interval of their product ab
+    :param a: 矩阵 a
+    :param b: 区间 [b_min, b_max]
+    :return: 乘积 ab 所在的区间
     """
     p = lambda x: np.maximum(x, 0)
     n = lambda x: np.maximum(-x, 0)
@@ -54,32 +54,32 @@ def intervals_scaling(a: Interval, b: Interval) -> np.ndarray:
 
 def intervals_diff(a: Interval, b: Interval) -> np.ndarray:
     """
-    Compute the difference of two intervals
+    计算两个区间的差。
 
-    :param a: interval [a_min, a_max]
-    :param b: interval [b_min, b_max]
-    :return: the interval of their difference a - b
+    :param a: 区间 [a_min, a_max]
+    :param b: 区间 [b_min, b_max]
+    :return: 差 a - b 所在的区间
     """
     return np.array([a[0] - b[1], a[1] - b[0]])
 
 
 def interval_negative_part(a: Interval) -> np.ndarray:
     """
-    Compute the negative part of an interval
+    计算区间的负值部分。
 
-    :param a: interval [a_min, a_max]
-    :return: the interval of its negative part min(a, 0)
+    :param a: 区间 [a_min, a_max]
+    :return: min(a, 0) 所在的区间
     """
     return np.minimum(a, 0)
 
 
 def integrator_interval(x: Interval, k: Interval) -> np.ndarray:
     """
-    Compute the interval of an integrator system: dx = -k*x
+    计算积分系统 dx = -k*x 的导数区间。
 
-    :param x: state interval
-    :param k: gain interval, must be positive
-    :return: interval for dx
+    :param x: 状态区间
+    :param k: 增益区间，必须为正
+    :return: dx 所在的区间
     """
 
     if x[0] >= 0:
@@ -90,7 +90,7 @@ def integrator_interval(x: Interval, k: Interval) -> np.ndarray:
         interval_gain = -np.array([k[0], k[0]])
     return (
         interval_gain * x
-    )  # Note: no flip of x, contrary to using intervals_product(k,interval_minus(x))
+    )  # 注意：这里不翻转 x，与使用 intervals_product(k,interval_minus(x)) 不同。
 
 
 def vector_interval_section(v_i: Interval, direction: Vector) -> np.ndarray:
@@ -108,11 +108,11 @@ def interval_absolute_to_local(
     position_i: Interval, lane: AbstractLane
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Converts an interval in absolute x,y coordinates to an interval in local (longiturinal, lateral) coordinates
+    将绝对坐标 x、y 的区间转换为局部纵向、横向坐标的区间。
 
-    :param position_i: the position interval [x_min, x_max]
-    :param lane: the lane giving the local frame
-    :return: the corresponding local interval
+    :param position_i: 位置区间 [x_min, x_max]
+    :param lane: 提供局部坐标系的车道
+    :return: 对应的局部坐标区间
     """
     position_corners = np.array(
         [
@@ -132,12 +132,12 @@ def interval_local_to_absolute(
     longitudinal_i: Interval, lateral_i: Interval, lane: AbstractLane
 ) -> Interval:
     """
-    Converts an interval in local (longiturinal, lateral) coordinates to an interval in absolute x,y coordinates
+    将局部纵向、横向坐标的区间转换为绝对坐标 x、y 的区间。
 
-    :param longitudinal_i: the longitudinal interval [L_min, L_max]
-    :param lateral_i: the lateral interval [l_min, l_max]
-    :param lane: the lane giving the local frame
-    :return: the corresponding absolute interval
+    :param longitudinal_i: 纵向区间 [L_min, L_max]
+    :param lateral_i: 横向区间 [l_min, l_max]
+    :param lane: 提供局部坐标系的车道
+    :return: 对应的绝对坐标区间
     """
     corners_local = [
         [longitudinal_i[0], lateral_i[0]],
@@ -156,11 +156,11 @@ def polytope(
     parametrized_f: Callable[[np.ndarray], np.ndarray], params_intervals: np.ndarray
 ) -> tuple[np.ndarray, list[np.ndarray]]:
     """
-    Get a matrix polytope from a parametrized matrix function and parameter box
+    根据参数化矩阵函数和参数的盒状区间构造矩阵多面体。
 
-    :param parametrized_f: parametrized matrix function
-    :param params_intervals: axes: [min, max], params
-    :return: a0, d_a polytope that represents the matrix interval
+    :param parametrized_f: 参数化矩阵函数
+    :param params_intervals: 各轴分别为 [min, max] 和参数
+    :return: 表示矩阵区间的多面体 a0, d_a
     """
     params_means = params_intervals.mean(axis=0)
     a0 = parametrized_f(params_means)
@@ -192,20 +192,20 @@ class LPV:
         x_i: Matrix = None,
     ) -> None:
         """
-        A Linear Parameter-Varying system:
+        线性变参数系统（LPV）：
 
-        dx = (a0 + sum(da))(x - center) + bd + c
+            dx = (a0 + sum(da))(x - center) + bd + c
 
-        :param x0: initial state
-        :param a0: nominal dynamics
-        :param da: list of dynamics deviations
-        :param b: control matrix
-        :param d: perturbation matrix
-        :param omega_i: perturbation bounds
-        :param u: constant known control
-        :param k: linear feedback: a0 x + bu -> (a0+bk)x + b(u-kx), where a0+bk is stable
-        :param center: asymptotic state
-        :param x_i: initial state interval
+        :param x0: 初始状态
+        :param a0: 标称动力学矩阵
+        :param da: 动力学偏差矩阵列表
+        :param b: 控制矩阵
+        :param d: 扰动矩阵
+        :param omega_i: 扰动上下界
+        :param u: 已知的恒定控制输入
+        :param k: 线性反馈：a0 x + bu -> (a0+bk)x + b(u-kx)，其中 a0+bk 稳定
+        :param center: 渐近状态
+        :param x_i: 初始状态区间
         """
         self.x0 = np.array(x0, dtype=float)
         self.a0 = np.array(a0, dtype=float)
@@ -223,7 +223,7 @@ class LPV:
             np.array(center) if center is not None else np.zeros(self.x0.shape)
         )
 
-        # Closed-loop dynamics
+        # 闭环动力学
         self.a0 += self.b @ self.k
 
         self.coordinates = None
@@ -236,13 +236,13 @@ class LPV:
 
     def update_coordinates_frame(self, a0: np.ndarray) -> None:
         """
-        Ensure that the dynamics matrix A0 is Metzler.
+        确保动力学矩阵 A0 是 Metzler 矩阵。
 
-        If not, design a coordinate transformation and apply it to the model and state interval.
-        :param a0: the dynamics matrix A0
+        否则，构造坐标变换，并将其应用于模型和状态区间。
+        :param a0: 动力学矩阵 A0
         """
         self.coordinates = None
-        # Rotation
+        # 旋转
         if not is_metzler(a0):
             eig_v, transformation = np.linalg.eig(a0)
             if np.isreal(eig_v).all():
@@ -255,7 +255,7 @@ class LPV:
         else:
             self.coordinates = (np.eye(a0.shape[0]), np.eye(a0.shape[0]))
 
-        # Forward coordinates change of states and models
+        # 对状态和模型进行正向坐标变换
         self.a0 = self.change_coordinates(self.a0, matrix=True)
         self.da = self.change_coordinates(self.da, matrix=True)
         self.b = self.change_coordinates(self.b, offset=False)
@@ -265,7 +265,7 @@ class LPV:
         if state is not None:
             control = (
                 control - self.k @ state
-            )  # the Kx part of the control is already present in A0.
+            )  # 控制中的 Kx 部分已经包含在 A0 中。
         self.u = control
 
     def change_coordinates(
@@ -277,15 +277,14 @@ class LPV:
         offset: bool = True,
     ) -> np.ndarray | list[np.ndarray]:
         """
-        Perform a change of coordinate: rotation and centering.
+        进行坐标变换：旋转和平移到中心。
 
-        :param value: the object to transform
-        :param matrix: is it a matrix or a vector?
-        :param back: if True, transform back to the original coordinates
-        :param interval: when transforming an interval, lossy interval arithmetic must be used to preserve the inclusion
-                         property.
-        :param offset: should we apply the centering or not
-        :return: the transformed object
+        :param value: 待变换的对象
+        :param matrix: 对象是矩阵还是向量
+        :param back: 若为 True，则变换回原坐标系
+        :param interval: 变换区间时需使用会损失精度的区间运算，以保持包含关系
+        :param offset: 是否应用中心平移
+        :return: 变换后的对象
         """
         if self.coordinates is None:
             return value
@@ -302,12 +301,12 @@ class LPV:
                     transformation_inv, value[:, :, np.newaxis]
                 ).squeeze()
                 return value
-        elif matrix:  # Matrix
+        elif matrix:  # 矩阵
             if back:
                 return transformation @ value @ transformation_inv
             else:
                 return transformation_inv @ value @ transformation
-        elif isinstance(value, list):  # List
+        elif isinstance(value, list):  # 列表
             return [self.change_coordinates(v, back) for v in value]
         else:
             if back:
@@ -330,11 +329,11 @@ class LPV:
 
     def step_naive_predictor(self, x_i: Interval, dt: float) -> np.ndarray:
         """
-        Step an interval predictor with box uncertainty.
+        对具有盒状不确定性的区间预测器推进一步。
 
-        :param x_i: state interval at time t
-        :param dt: time step
-        :return: state interval at time t+dt
+        :param x_i: t 时刻的状态区间
+        :param dt: 时间步长
+        :return: t+dt 时刻的状态区间
         """
         a0, da, d, omega_i, b, u = (
             self.a0,
@@ -355,11 +354,11 @@ class LPV:
 
     def step_interval_predictor(self, x_i: Interval, dt: float) -> np.ndarray:
         """
-        Step an interval predictor with polytopic uncertainty.
+        对具有多面体不确定性的区间预测器推进一步。
 
-        :param x_i: state interval at time t
-        :param dt: time step
-        :return: state interval at time t+dt
+        :param x_i: t 时刻的状态区间
+        :param dt: 时间步长
+        :return: t+dt 时刻的状态区间
         """
         a0, da, d, omega_i, b, u = (
             self.a0,

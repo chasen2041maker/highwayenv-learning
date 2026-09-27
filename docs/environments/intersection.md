@@ -71,7 +71,7 @@ See {ref}`road-neighbour-vehicles` for details.
         "lateral": False,
         "target_speeds": [0, 4.5, 9],
     },
-    "duration": 13,  # [s]
+    "duration": 13,  # 单位：秒
     "destination": "o1",
     "controlled_vehicles": 1,
     "initial_vehicle_count": 10,

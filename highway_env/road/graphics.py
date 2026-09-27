@@ -19,7 +19,7 @@ PositionType = Union[Tuple[float, float], np.ndarray]
 
 
 class WorldSurface(pygame.Surface):
-    """A pygame Surface implementing a local coordinate system so that we can move and zoom in the displayed area."""
+    """带有局部坐标系的 pygame 绘图表面，支持平移和缩放显示区域。"""
 
     BLACK = (0, 0, 0)
     GREY = (100, 100, 100)
@@ -41,38 +41,39 @@ class WorldSurface(pygame.Surface):
 
     def pix(self, length: float) -> int:
         """
-        Convert a distance [m] to pixels [px].
+        将距离（米）转换为像素数。
 
-        :param length: the input distance [m]
-        :return: the corresponding size [px]
+        :param length: 输入距离，单位为米
+        :return: 对应的像素尺寸
         """
         return int(length * self.scaling)
 
     def pos2pix(self, x: float, y: float) -> tuple[int, int]:
         """
-        Convert two world coordinates [m] into a position in the surface [px]
+        将世界坐标（米）转换为绘图表面上的位置（像素）。
 
-        :param x: x world coordinate [m]
-        :param y: y world coordinate [m]
-        :return: the coordinates of the corresponding pixel [px]
+        :param x: 世界坐标 x，单位为米
+        :param y: 世界坐标 y，单位为米
+        :return: 对应的像素坐标
         """
         return self.pix(x - self.origin[0]), self.pix(y - self.origin[1])
 
     def vec2pix(self, vec: PositionType) -> tuple[int, int]:
         """
-        Convert a world position [m] into a position in the surface [px].
+        将世界位置（米）转换为绘图表面上的位置（像素）。
 
-        :param vec: a world position [m]
-        :return: the coordinates of the corresponding pixel [px]
+        :param vec: 世界位置，单位为米
+        :return: 对应的像素坐标
         """
         return self.pos2pix(vec[0], vec[1])
 
     def is_visible(self, vec: PositionType, margin: int = 50) -> bool:
         """
-        Is a position visible in the surface?
-        :param vec: a position
-        :param margin: margins around the frame to test for visibility
-        :return: whether the position is visible
+        判断某个位置在绘图表面中是否可见。
+
+        :param vec: 位置
+        :param margin: 可见性检查时在画面周围保留的边距
+        :return: 该位置是否可见
         """
         x, y = self.vec2pix(vec)
         return (
@@ -82,9 +83,9 @@ class WorldSurface(pygame.Surface):
 
     def move_display_window_to(self, position: PositionType) -> None:
         """
-        Set the origin of the displayed area to center on a given world position.
+        设置显示区域的原点，使画面以给定世界位置为中心。
 
-        :param position: a world position [m]
+        :param position: 世界位置，单位为米
         """
         self.origin = position - np.array(
             [
@@ -95,9 +96,9 @@ class WorldSurface(pygame.Surface):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """
-        Handle pygame events for moving and zooming in the displayed area.
+        处理用于平移和缩放显示区域的 pygame 事件。
 
-        :param event: a pygame event
+        :param event: pygame 事件
         """
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_l:
@@ -111,28 +112,28 @@ class WorldSurface(pygame.Surface):
 
 
 class LaneGraphics:
-    """A visualization of a lane."""
+    """车道的可视化绘制。"""
 
-    # See https://www.researchgate.net/figure/French-road-traffic-lane-description-and-specification_fig4_261170641
+    # 参考 https://www.researchgate.net/figure/French-road-traffic-lane-description-and-specification_fig4_261170641
     STRIPE_SPACING: float = 4.33
-    """ Offset between stripes [m]"""
+    """虚线条纹之间的偏移距离，单位为米。"""
 
     STRIPE_LENGTH: float = 3
-    """ Length of a stripe [m]"""
+    """一条虚线条纹的长度，单位为米。"""
 
     STRIPE_WIDTH: float = 0.3
-    """ Width of a stripe [m]"""
+    """一条虚线条纹的宽度，单位为米。"""
 
     @classmethod
     def display(cls, lane: AbstractLane, surface: WorldSurface) -> None:
         """
-        Display a lane on a surface.
+        在绘图表面上显示车道。
 
-        :param lane: the lane to be displayed
-        :param surface: the pygame surface
+        :param lane: 要显示的车道
+        :param surface: pygame 绘图表面
         """
 
-        # Optimized path for PolyLane with continuous borders
+        # 对具有连续边界的 PolyLane 使用优化绘制流程
         if (
             isinstance(lane, PolyLane)
             and lane.line_types[0] == LineType.CONTINUOUS
@@ -175,13 +176,13 @@ class LaneGraphics:
         side: int,
     ) -> None:
         """
-        Draw a striped line on one side of a lane, on a surface.
+        在绘图表面上绘制车道一侧的虚线。
 
-        :param lane: the lane
-        :param surface: the pygame surface
-        :param stripes_count: the number of stripes to draw
-        :param longitudinal: the longitudinal position of the first stripe [m]
-        :param side: which side of the road to draw [0:left, 1:right]
+        :param lane: 车道
+        :param surface: pygame 绘图表面
+        :param stripes_count: 要绘制的条纹数量
+        :param longitudinal: 第一条条纹的纵向位置，单位为米
+        :param side: 绘制道路的哪一侧，0 为左侧，1 为右侧
         """
         starts = longitudinal + np.arange(stripes_count) * cls.STRIPE_SPACING
         ends = (
@@ -202,13 +203,13 @@ class LaneGraphics:
         side: int,
     ) -> None:
         """
-        Draw a striped line on one side of a lane, on a surface.
+        在绘图表面上绘制车道一侧的虚线。
 
-        :param lane: the lane
-        :param surface: the pygame surface
-        :param stripes_count: the number of stripes to draw
-        :param longitudinal: the longitudinal position of the first stripe [m]
-        :param side: which side of the road to draw [0:left, 1:right]
+        :param lane: 车道
+        :param surface: pygame 绘图表面
+        :param stripes_count: 要绘制的条纹数量
+        :param longitudinal: 第一条条纹的纵向位置，单位为米
+        :param side: 绘制道路的哪一侧，0 为左侧，1 为右侧
         """
         starts = longitudinal + np.arange(stripes_count) * cls.STRIPE_SPACING
         ends = (
@@ -229,13 +230,13 @@ class LaneGraphics:
         side: int,
     ) -> None:
         """
-        Draw a continuous line on one side of a lane, on a surface.
+        在绘图表面上绘制车道一侧的实线。
 
-        :param lane: the lane
-        :param surface: the pygame surface
-        :param stripes_count: the number of stripes that would be drawn if the line was striped
-        :param longitudinal: the longitudinal position of the start of the line [m]
-        :param side: which side of the road to draw [0:left, 1:right]
+        :param lane: 车道
+        :param surface: pygame 绘图表面
+        :param stripes_count: 如果画成虚线时所需的条纹数量
+        :param longitudinal: 线段起点的纵向位置，单位为米
+        :param side: 绘制道路的哪一侧，0 为左侧，1 为右侧
         """
         starts = [longitudinal + 0 * cls.STRIPE_SPACING]
         ends = [longitudinal + stripes_count * cls.STRIPE_SPACING + cls.STRIPE_LENGTH]
@@ -252,13 +253,13 @@ class LaneGraphics:
         lats: list[float],
     ) -> None:
         """
-        Draw a set of stripes along a lane.
+        沿车道绘制一组条纹。
 
-        :param lane: the lane
-        :param surface: the surface to draw on
-        :param starts: a list of starting longitudinal positions for each stripe [m]
-        :param ends: a list of ending longitudinal positions for each stripe [m]
-        :param lats: a list of lateral positions for each stripe [m]
+        :param lane: 车道
+        :param surface: 用于绘制的表面
+        :param starts: 各条纹起点的纵向位置列表，单位为米
+        :param ends: 各条纹终点的纵向位置列表，单位为米
+        :param lats: 各条纹的横向位置列表，单位为米
         """
         starts = np.clip(starts, 0, lane.length)
         ends = np.clip(ends, 0, lane.length)
@@ -307,15 +308,15 @@ class LaneGraphics:
 
 
 class RoadGraphics:
-    """A visualization of a road lanes and vehicles."""
+    """道路车道和车辆的可视化绘制。"""
 
     @staticmethod
     def display(road: Road, surface: WorldSurface) -> None:
         """
-        Display the road lanes on a surface.
+        在绘图表面上显示道路的车道。
 
-        :param road: the road to be displayed
-        :param surface: the pygame surface
+        :param road: 要显示的道路
+        :param surface: pygame 绘图表面
         """
         surface.fill(surface.GREY)
         for _from in road.network.graph.keys():
@@ -332,12 +333,12 @@ class RoadGraphics:
         offscreen: bool = False,
     ) -> None:
         """
-        Display the road vehicles on a surface.
+        在绘图表面上显示道路车辆。
 
-        :param road: the road to be displayed
-        :param surface: the pygame surface
-        :param simulation_frequency: simulation frequency
-        :param offscreen: render without displaying on a screen
+        :param road: 要显示的道路
+        :param surface: pygame 绘图表面
+        :param simulation_frequency: 仿真频率
+        :param offscreen: 是否只渲染而不显示到屏幕
         """
         if road.record_history:
             for v in road.vehicles:
@@ -352,18 +353,18 @@ class RoadGraphics:
         road: Road, surface: WorldSurface, offscreen: bool = False
     ) -> None:
         """
-        Display the road objects on a surface.
+        在绘图表面上显示道路物体。
 
-        :param road: the road to be displayed
-        :param surface: the pygame surface
-        :param offscreen: whether the rendering should be done offscreen or not
+        :param road: 要显示的道路
+        :param surface: pygame 绘图表面
+        :param offscreen: 是否使用离屏渲染
         """
         for o in road.objects:
             RoadObjectGraphics.display(o, surface, offscreen=offscreen)
 
 
 class RoadObjectGraphics:
-    """A visualization of objects on the road."""
+    """道路物体的可视化绘制。"""
 
     YELLOW = (200, 200, 0)
     BLUE = (100, 200, 255)
@@ -381,19 +382,19 @@ class RoadObjectGraphics:
         offscreen: bool = False,
     ):
         """
-        Display a road objects on a pygame surface.
+        在 pygame 绘图表面上显示道路物体。
 
-        The objects is represented as a colored rotated rectangle
+        物体表示为带有颜色、可以旋转的矩形。
 
-        :param object_: the vehicle to be drawn
-        :param surface: the surface to draw the object on
-        :param transparent: whether the object should be drawn slightly transparent
-        :param offscreen: whether the rendering should be done offscreen or not
+        :param object_: 要绘制的车辆或物体
+        :param surface: 用于绘制物体的表面
+        :param transparent: 是否将物体绘制为略微透明
+        :param offscreen: 是否使用离屏渲染
         """
         o = object_
         s = pygame.Surface(
             (surface.pix(o.LENGTH), surface.pix(o.LENGTH)), pygame.SRCALPHA
-        )  # per-pixel alpha
+        )  # 逐像素透明度
         rect = (
             0,
             surface.pix(o.LENGTH / 2 - o.WIDTH / 2),
@@ -404,10 +405,10 @@ class RoadObjectGraphics:
         pygame.draw.rect(s, cls.BLACK, rect, 1)
         if (
             not offscreen
-        ):  # convert_alpha throws errors in offscreen mode TODO() Explain why
+        ):  # 离屏模式下 convert_alpha 会报错；TODO：解释原因。
             s = pygame.Surface.convert_alpha(s)
         h = o.heading if abs(o.heading) > 2 * np.pi / 180 else 0
-        # Centered rotation
+        # 绕中心旋转
         position = surface.pos2pix(o.position[0], o.position[1])
         cls.blit_rotate(surface, s, position, np.rad2deg(-h))
 
@@ -420,8 +421,8 @@ class RoadObjectGraphics:
         origin_pos: Vector = None,
         show_rect: bool = False,
     ) -> None:
-        """Many thanks to https://stackoverflow.com/a/54714144."""
-        # calculate the axis aligned bounding box of the rotated image
+        """感谢 https://stackoverflow.com/a/54714144 提供的方法。"""
+        # 计算旋转后图像的轴对齐包围框
         w, h = image.get_size()
         box = [pygame.math.Vector2(p) for p in [(0, 0), (w, 0), (w, -h), (0, -h)]]
         box_rotate = [p.rotate(angle) for p in box]
@@ -434,23 +435,23 @@ class RoadObjectGraphics:
             max(box_rotate, key=lambda p: p[1])[1],
         )
 
-        # calculate the translation of the pivot
+        # 计算旋转中心的平移量
         if origin_pos is None:
             origin_pos = w / 2, h / 2
         pivot = pygame.math.Vector2(origin_pos[0], -origin_pos[1])
         pivot_rotate = pivot.rotate(angle)
         pivot_move = pivot_rotate - pivot
 
-        # calculate the upper left origin of the rotated image
+        # 计算旋转后图像左上角的原点
         origin = (
             pos[0] - origin_pos[0] + min_box[0] - pivot_move[0],
             pos[1] - origin_pos[1] - max_box[1] + pivot_move[1],
         )
-        # get a rotated image
+        # 获取旋转后的图像
         rotated_image = pygame.transform.rotate(image, angle)
-        # rotate and blit the image
+        # 旋转图像并绘制到表面
         surf.blit(rotated_image, origin)
-        # draw rectangle around the image
+        # 在图像周围绘制矩形
         if show_rect:
             pygame.draw.rect(surf, (255, 0, 0), (*origin, *rotated_image.get_size()), 2)
 
@@ -460,13 +461,13 @@ class RoadObjectGraphics:
 
         if isinstance(object_, Obstacle):
             if object_.crashed:
-                # indicates failure
+                # 表示失败
                 color = cls.RED
             else:
                 color = cls.YELLOW
         elif isinstance(object_, Landmark):
             if object_.hit:
-                # indicates success
+                # 表示成功
                 color = cls.GREEN
             else:
                 color = cls.BLUE

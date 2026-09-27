@@ -4,28 +4,28 @@
 *.pyc   binary
 *.ipynb text eol=lf
 
-# Config & Data
+# 配置与数据
 *.toml  text eol=lf
 *.yml   text eol=lf
 *.yaml  text eol=lf
 *.lock  text eol=lf
 *.json  text eol=lf
 
-# Documentation
+# 文档
 *.md    text eol=lf
 *.rst   text eol=lf
 *.css   text eol=lf
 *.html  text eol=lf
 
-# Citation
+# 引用信息
 *.cff   text eol=lf
 *.bib   text eol=lf
 
-# Scripts
+# 脚本
 *.bat   text eol=crlf
 *.sh    text eol=lf
 
-# Image & Video Files
+# 图片与视频文件
 *.svg   binary
 *.png   binary
 *.jpg   binary
@@ -34,7 +34,7 @@
 *.gif   binary
 *.mp4   binary
 
-# Data & Model Storage Formats
+# 数据与模型存储格式
 *.npz   binary
 *.npy   binary
 *.pkl   binary

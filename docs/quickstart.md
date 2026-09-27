@@ -107,7 +107,7 @@ model = DQN('MlpPolicy', env,
 model.learn(int(2e4))
 model.save("highway_dqn/model")
 
-# Load and test saved model
+# 加载并测试已保存的模型
 model = DQN.load("highway_dqn/model")
 while True:
   done = truncated = False

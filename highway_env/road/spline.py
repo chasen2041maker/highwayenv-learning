@@ -5,10 +5,10 @@ import numpy as np
 
 def numpy_interp1d(x: np.ndarray, y: np.ndarray):
     """
-    Drop-in replacement for ``scipy.interpolate.interp1d(x, y, fill_value="extrapolate")``.
+    可直接替代 ``scipy.interpolate.interp1d(x, y, fill_value="extrapolate")``。
 
-    Introduced by https://github.com/Farama-Foundation/HighwayEnv/pull/691 to remove the ``scipy`` dependency.
-    A validation benchmark script can be found at ``scripts/validate/bench_interp1d.py``.
+    由 https://github.com/Farama-Foundation/HighwayEnv/pull/691 引入，以移除 ``scipy`` 依赖。
+    原说明中的验证基准脚本路径为 ``scripts/validate/bench_interp1d.py``。
     """
 
     def interpolator(x_new):
@@ -35,10 +35,10 @@ def numpy_interp1d(x: np.ndarray, y: np.ndarray):
 
 class LinearSpline2D:
     """
-    Piece-wise linear curve fitted to a list of points.
+    根据一组点拟合的分段线性曲线。
     """
 
-    PARAM_CURVE_SAMPLE_DISTANCE: int = 1  # curve samples are placed 1m apart
+    PARAM_CURVE_SAMPLE_DISTANCE: int = 1  # 曲线采样点之间相距 1 米
 
     def __init__(self, points: list[tuple[float, float]]):
         x_values = np.array([pt[0] for pt in points])
@@ -70,7 +70,7 @@ class LinearSpline2D:
 
     def cartesian_to_frenet(self, position: tuple[float, float]) -> tuple[float, float]:
         """
-        Transform the point in Cartesian coordinates into Frenet coordinates of the curve
+        将笛卡尔坐标中的点转换为曲线的 Frenet 坐标。
         """
 
         pose = self.poses[-1]
@@ -94,7 +94,7 @@ class LinearSpline2D:
 
     def frenet_to_cartesian(self, lon: float, lat: float) -> tuple[float, float]:
         """
-        Convert the point from Frenet coordinates of the curve into Cartesian coordinates
+        将曲线 Frenet 坐标中的点转换为笛卡尔坐标。
         """
         idx_segment = self._get_idx_segment_for_lon(lon)
         s = lon - self.s_samples[idx_segment]
@@ -105,7 +105,7 @@ class LinearSpline2D:
 
     def _get_idx_segment_for_lon(self, lon: float) -> int:
         """
-        Returns the index of the curve pose that corresponds to the longitudinal coordinate
+        返回与给定纵向坐标对应的曲线位姿索引。
         """
         idx_smaller = np.argwhere(lon < self.s_samples)
         if len(idx_smaller) == 0:
@@ -117,8 +117,8 @@ class LinearSpline2D:
     @staticmethod
     def sample_curve(x_curve, y_curve, length: float, CURVE_SAMPLE_DISTANCE=1):
         """
-        Create samples of the curve that are CURVE_SAMPLE_DISTANCE apart. These samples are used for Frenet to Cartesian
-        conversion and vice versa
+        以 CURVE_SAMPLE_DISTANCE 为间距生成曲线采样点。
+        这些采样点用于 Frenet 坐标与笛卡尔坐标之间的相互转换。
         """
         num_samples = np.floor(length / CURVE_SAMPLE_DISTANCE)
         s_values = CURVE_SAMPLE_DISTANCE * np.arange(0, int(num_samples) + 1)
@@ -141,7 +141,7 @@ class LinearSpline2D:
 
 class CurvePose:
     """
-    Sample pose on a curve that is used for Frenet to Cartesian conversion
+    曲线上的采样位姿，用于将 Frenet 坐标转换为笛卡尔坐标。
     """
 
     def __init__(self, x: float, y: float, dx: float, dy: float):
@@ -152,18 +152,18 @@ class CurvePose:
 
     def distance_to_origin(self, point: tuple[float, float]) -> float:
         """
-        Compute the distance between the point [x, y] and the pose origin
+        计算点 [x, y] 到位姿原点的距离。
         """
         return np.sqrt(np.sum((self.position - point) ** 2))
 
     def project_onto_normal(self, point: tuple[float, float]) -> float:
         """
-        Compute the longitudinal distance from pose origin to point by projecting the point onto the normal vector of the pose
+        将点投影到位姿的方向向量，计算从位姿原点到该点的纵向距离。
         """
         return self.normal.dot(point - self.position)
 
     def project_onto_orthonormal(self, point: tuple[float, float]) -> float:
         """
-        Compute the lateral distance from pose origin to point by projecting the point onto the orthonormal vector of the pose
+        将点投影到与位姿方向正交的单位向量，计算从位姿原点到该点的横向距离。
         """
         return self.orthonormal.dot(point - self.position)
