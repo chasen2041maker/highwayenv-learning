@@ -1,3 +1,5 @@
+> **历史记录保留，2026-09-27 起不再向这里追加。** 当前进度与新日志统一在 [vla_basic/PROGRESS.md](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md) 和 [主学习日志](https://github.com/chasen2041maker/vla_basic/blob/main/learning/LEARNING_LOG.md)。以下旧分工与旧路径是当时事实，以最新主项目入口为准。
+
 # 学习历史与实验依据
 
 当前接续点见 [PROGRESS.md](../PROGRESS.md)。后续按时间追加实质变化，不把讲解、助手验证和学习者独立掌握混写。以下首次归档依据当前会话回顾，不给旧实验编造精确发生时间。
@@ -95,7 +97,7 @@
 - 执行者：GPT 维护角色。基准版本为本仓库 `caeee8225d88f8092fbcf39a5ff02c59d35904ca` 和 vla_basic `4503a9cc9d0b67add5e85c28aa5d75e73f2725a7`。
 - 本仓库只调整 README、AGENTS、PROGRESS、学习路线和本历史文件，新增 [理论反向索引](THEORY_LINKS.md)。实际 demo.py、模拟器、依赖、已有证据和进度技能内容保持不变；没有操作用户本机环境或技能安装。
 - 当前课题、实验和理解状态仍由本仓库 PROGRESS.md 唯一承接；vla_basic 的进度页只做跳转，不再用旧 H001 约束当前实践。新增理论材料不等于已经授课或掌握。
-- vla_basic 提供目标速度与控制器、step 与反馈、观察与相对运动三份讲义，对应这里现有代码；详细关系见 [理论—实践对应表](https://github.com/chasen2041maker/vla_basic/blob/main/PRACTICE_MAP.md)。
+- vla_basic 提供目标速度与控制器、step 与反馈、观察与相对运动三份讲义，对应这里现有代码；详细关系见 [理论—实践对应表](https://github.com/chasen2041maker/vla_basic/blob/main/archive/PRACTICE_MAP.md)。
 - 本轮未运行新的驾驶仿真、训练或桌面窗口验证，未收到学习者新日志或独立原理解释。低速配置依然是“已修改待运行/解释”，下一步不重复添加配置。
 - 维护检查范围是文档、互链和代码保留；远端发布结果以实际提交与分支核对为准，不将旧 CI 结果记成本轮通过。
 
@@ -276,6 +278,85 @@
 - 助手复核 68 个修改过的 Python 文件，排除独立说明字符串的内容差异后，仅 demo.py 存在执行结构变化，已人工核对为距离打印；5 个 Notebook、27 个代码单元除说明文字外执行结构一致，输出、元数据和 Markdown 保持。3 个分课题 demo 语法检查通过；21 项控制、动作、邻车测试通过，3.51 秒；未声称完整 CI 或所有静态检查通过。
 - 本轮助手未代改学习代码，未新增用户驾驶实验或理解回答。只概括动作类并明确后续以“右变道 → 目标车道 → 转向 → 位置变化”为主线；源码接续保持 action.py 第 214 行。
 - 13:36:59 补记上传结果：归档合并提交 [d38ef04](https://github.com/chasen2041maker/highwayenv-learning/commit/d38ef04ad07ab26acd9b9278526f4a83552d49eb) 已成功推送；git ls-remote 返回的 main 与本地 HEAD 相同，当时工作区干净。原线上 d5fa162 是当前提交祖先，未覆盖丢失。此条结果记录作为后续文档提交同步；使用 [skip ci]，不宣称远端整套 CI 通过。
+
+## 2026-09-27 13:43｜补讲 AbstractEnv 的来源与类型提示
+
+- 用户用拼音追问 AbstractEnv 从哪里来；助手核对 action.py 第 17～27 行、abstract.py 第 40 行及 define_spaces、HighwayEnv 的继承声明与当前 demo。
+- 讲解 AbstractEnv 是本项目在 envs/common/abstract.py 定义的通用环境基类，继承 gym.Env，HighwayEnv 再继承它；导入路径的各段对应目录和模块。action.py 中 TYPE_CHECKING 条件导入供类型检查使用，普通运行不执行，首行 future annotations 推迟注解求值。
+- 区分 `env: AbstractEnv` 的类型提示与创建对象：动作对象收到实际环境，`self.env = env` 保存引用；源码中 define_spaces 将 self 交给 action_factory。解释为助手讲解，不记作用户已理解。
+- 执行者：助手仅维护 PROGRESS.md 与本日志，未改学习代码、未运行仿真、未提交或推送。无新增用户实验或理解回答；当前 action.py 接续保持第 214 行，优先处理本段疑问。
+
+## 2026-09-27 13:46｜DiscreteMetaAction 的配置与高层指令转发
+
+- 用户指定继续学习 DiscreteMetaAction；助手核对当前 demo、action.py 第 200～299 行及 controller.py 相关实现，保留刚新增的 AbstractEnv 答疑记录。按完整功能块讲解，没有修改用户学习代码。
+- 说明纵向/横向开关如何选择动作表，两者都关闭时报错；target_speeds 是 m/s 的速度档位，当前 demo 的 7 个档位仍配默认 5 种动作。解释 actions_indexes 反向查询与 space 的动作数量。
+- 说明 vehicle_class 返回通过 functools.partial 预设速度列表的 MDPVehicle 构造器，读取该属性并未创建车；act 将编号查成字符串交给车辆。以默认 2→LANE_RIGHT 串起入口，IDLE 继续跟踪已有速度和车道目标，不能理解为停止控制。
+- get_available_actions 根据当前车道可达性及速度档位边界列出动作，不检查邻车安全；act 不自动调用它做过滤。结合根 demo 只选 1/3/4，解释其不会主动选择变道；此节未增加自主变道策略。
+- 执行者：助手仅维护 PROGRESS.md 和本日志，未运行新仿真、未提交或推送，无新增用户运行或理解证据。此前 03 完整代码仍等待用户速度输出，不要求重复已有 02 实验。
+- 下一次从 controller.py 文件开头认识 ControlledVehicle、目标状态初始化，再读 act 的目标车道更新和底层控制；之后用已有 01_lane_change.py 验证。源码阅读进度与用户掌握程度分开记录。
+
+## 2026-09-27 13:59｜可选速度列表、当前目标与实际速度
+
+- 用户引用 DiscreteMetaAction 中 self.target_speeds 的条件赋值，询问是否先给一个目标，让车辆朝该速度靠近。记录为方向正确的理解尝试；仍需区分列表与当前选中的单一目标，不升级为已独立掌握控制器。
+- 助手核对 action.py:233～237、controller.py 的默认速度列表、MDPVehicle 目标选择与 speed_control，以及当前 demo。说明传入列表时转换为 NumPy 数组，未传时使用 [20,25,30] m/s；根 demo 已自定义为 [0,5,10,15,20,25,30] m/s。
+- 讲解 target_speeds 是可选目标列表，车辆 target_speed 是其中选中的一个值，speed 是当前实际值；控制器根据目标减实际的差给出加减速，设目标不会让速度瞬间跳到目标。数值示例仅用于讲解，没有新运行结果。
+- 执行者：助手只更新 PROGRESS.md 和本日志，未修改学习代码、未仿真、未提交或推送。列表与单一目标的细化待用户反馈；保留已完成 DiscreteMetaAction 带读事实，下一次仍从 controller.py 开头接续，优先答疑。
+
+## 2026-09-27 14:07｜细讲 get_available_actions 的条件与列表构造
+
+- 用户自述读到 get_available_actions，知道函数用途，但内部细节较多、尚未细读。助手据此局部放慢，不将此前概括讲解当作用户已读懂实现，不推进控制器新课。
+- 核对 action.py:263～299、road.py:211～222 的左右相邻车道枚举、lane.py:106～120 的可达性判断和当前 demo。拆解 IDLE 初始化、network、for、车道三元组第三项、左右比较、and、append、速度档位边界与 return；道路几何仅解释接口作用，不另开课题。
+- 用假设场景推演：默认完整动作表、4 车道、自车编号 1、两相邻车道均可达、7 档速度且 speed_index=3，返回 [1,0,2,3,4]；同样条件改为最左车道且最高档，返回 [1,2,4]。速度档位是索引、不是实际速度数值；结果是候选动作集合的列表，不是执行顺序或自动决策。
+- 再次说明可达性检查车道禁入及几何范围，没有检查邻车；act 不自动调用该查询做过滤。以上为源码推演，无实测结果。用户仅对用途自述理解，内部条件的理解待反馈。
+- 执行者：助手只维护 PROGRESS.md 和本日志，保留此前速度答疑；没有修改学习代码、运行仿真、提交或推送。接续先解答该函数剩余疑问，再从 controller.py 文件开头进入目标状态与控制器。
+
+## 2026-09-27 14:25｜保存换对话接续点与变道执行困惑
+
+- 用户询问进度是否保存，表示准备换对话继续；同时描述对变道有“给目标、符合要求就能执行”的模糊感。记录为对目标与条件关系的初步概括，实际执行机制尚未串通，不升级为已掌握。
+- 助手核对当前进度、controller.py 的右变道目标更新和 steering_control、kinematics.py 的位置推进及此前独立变道证据。简要澄清：get_available_actions 只查询候选动作；车辆收到指令后更新目标车道，控制器计算转向角，运动模型逐步改变位置和航向并反复控制。用车道中心 y=4 与 y=8 作位置示意，未声称新实验或用户运行。
+- 新对话接续明确为 controller.py 从开头认识目标状态，再沿 act → steering_control → Vehicle.step 拆开变道执行；随后由用户结合已有 01_lane_change.py 验证目标变化与实际运动。保持完整路径、用户亲手写代码及适度加快的偏好，不重讲整套动作类。
+- 执行者：助手只维护 PROGRESS.md 与本日志，无学习代码修改、新仿真、提交或推送；没有创建新对话。告知用户在同一项目新对话读取 AGENTS.md 和 PROGRESS.md 后从这一困惑继续。
+
+## 2026-09-27 14:30｜action.py 在驾驶流程中的整体定位
+
+- 用户追问动作文件提供什么、定位是什么。助手核对 ActionType、ContinuousAction、Meta 及 abstract.py 的调用入口，围绕已有变道困惑说明模块分工，不引入新的练习或类带读。
+- 将 action.py 解释为策略与模拟车辆之间的动作接口：规定输入空间及含义，映射并转发指令，提供匹配的车辆构造器；Meta 提供候选动作查询，工厂按配置选择动作实现。高层右变道示意分为策略选编号、动作层翻译、控制器更新目标并算转向、运动模型推进位置；直接连续动作则可映射为控制量，无需目标车道控制器。
+- 用户尚未反馈对这一定位的理解；保留其对 get_available_actions 用途的自述及变道执行模糊感。执行者为助手，只维护 PROGRESS.md 与本日志，无学习代码修改、新实验、提交或推送。新对话仍从 controller.py 开头接续右变道执行链。
+
+## 2026-09-27 14:48｜MultiAgentAction 的逐车绑定与动作分发
+
+- 用户要求先解释 MultiAgentAction，调整顺序先接 action.py:302～334。助手核对整个类、action_factory、环境 reset 绑定流程和当前 demo；没有将此前计划进入控制器当作必须先完成的门槛。
+- 按源码顺序讲解构造函数为每辆 controlled_vehicle 创建独立动作对象，共用 action_config 并逐一设置 controlled_vehicle；space 组合各车空间，vehicle_class 从内部动作类型取得匹配车辆构造器，未在此创建车辆。
+- 假设两辆受控车均使用默认完整 DiscreteMetaAction，Tuple(Discrete(5),Discrete(5)) 的 (2,4) 分别转交第一车右变道、第二车减速；是同一步的各车指令。assert 检查元组，zip(strict=False) 按顺序配对且按短的一侧停止，不能据此声称数量已严格校验。
+- get_available_actions 用星号展开各车候选集合后交给 itertools.product，返回联合动作组合的迭代器；例如 [1,2] 与 [1,4] 组合为 (1,1)、(1,4)、(2,1)、(2,4)。这些是源码推演，不是实测；无联合交通安全检查，内部动作类型须提供候选查询实现。
+- 执行者：助手仅维护 PROGRESS.md 和本日志，未修改学习代码、未运行新实验、未提交推送。当前 demo 仍使用单车 DiscreteMetaAction；新内容理解待反馈。下次优先答疑，再从 action.py:337 的 action_factory 接续，之后回到此前目标车道到实际运动的困惑。
+
+## 2026-09-27 15:00｜action_factory 将配置转换为动作对象
+
+- 用户要求继续；助手核对当前进度及 demo，从 action.py:337～347 讲解末尾的 action_factory，并联系 DiscreteMetaAction 构造函数和 AbstractEnv.define_spaces。
+- 讲解该函数位于类外，按 config["type"] 创建对应 ActionType 子类对象；用当前 action 子字典展开 **config，说明 target_speeds 由同名形参接收，额外 type 进入 **kwargs。区分类型字符串、类和实例，return 返回实例后立即结束，不因第一分支单独使用 if 而继续落入 else；未知类型名称抛 ValueError。
+- 结合 abstract.py:160～162 说明环境将返回对象保存到 self.action_type，再调用 space 得到 action_space；工厂用于创建处理对象，车辆动作执行仍通过后续 act 调用。本轮仅源码讲解，无新运行结果。
+- 执行者：助手仅更新 PROGRESS.md 与本日志，未修改学习代码、未运行实验、未提交推送。用户“继续”不记为理解确认；动作文件已带读到末尾，下一次优先答疑，再从 controller.py 第 1～48 行进入目标状态与变道控制，保留此前实际运动尚未串通的困惑。
+
+## 2026-09-27 15:06｜对照工厂中的四种动作类型
+
+- 用户引用 action_factory，追问四种类型的区别。助手核对本地四类实现及当前 demo，按输入形式、控制含义和车辆数量作对照：连续控制量、编号选择固定控制组合、高层目标指令、多车动作分发。
+- 用默认双轴配置说明 ContinuousAction 的 [0.5,-0.2] 映射到加速度 2.5 m/s²、转向 -9°；DiscreteAction 默认每轴 3 值时，7→[1,0]，4→[0,0]；默认完整 Meta 的 4→SLOWER，调整速度目标。MultiAgentAction 的内部类型可选择前述单车实现，并非只接受 Meta。例子均按源码解释，没有新运行结果。
+- 执行者：助手仅维护 PROGRESS.md 与本日志，无学习代码修改、仿真、提交或推送。提问不记为理解确认；源码仍已带读至 action.py 末尾，优先答疑后从 controller.py 开头串通目标到实际运动。
+
+## 2026-09-27｜系统学习起点与两库版本核对
+
+- 用户带回 vla_basic 外部课程审查，询问能否开始，并明确此前未系统学过智驾。助手核对本地两库与 GitHub：理论库本地旧版本与远端分工不同，外部审查的 action.py:214 接续也早于本库最新记录。
+- 沿用本库唯一学习进度，保留已有跟车运行、个人解释及动作文件带读至末尾的事实。先补观察→决策→动作接口→控制→运动的整体职责，再继续 controller.py 的既有接续，不重新指派旧 H001。
+- 执行者：助手仅维护教学导航和记录；用户的新反馈是背景说明，没有新实验、代码修改或独立理解证据。未运行仿真、提交、推送或合并 PR，未升级能力状态。
+
+## 2026-09-27T15:44:41+08:00｜两库共同接续：当前状态与目标状态
+
+- 用户明确开始学习，要求助手记录进度并打通理论库与 HighwayEnv 实践库。助手将此协作约定加入教学约定，理论库继续只保留进度指针；本地理论和实践导航互相链接。
+- 在 vla_basic/SYSTEM_MENTAL_MODEL.md 新增第 1.1 节，不创建另一套课程或新实验。核对 controller.py、kinematics.py、objects.py 与已有控制测试，讲解当前速度/车道与目标速度/车道、世界坐标及单位、ControlledVehicle 的职责和构造初始化；控制参数留到具体方法展开。
+- 本节假设实际速度 25 m/s、目标速度 20 m/s，用于解释而非实测。初始化不推进时间；源码 or 表达式也把零目标当假值，边界已注明，不修改源码。讲义包含变道目标与实际位置的正常例子和后续诊断方向。
+- 当前证据：助手已提供讲义与带读内容，尚无本人解释、新修改或新运行，状态 REVIEW。未运行仿真或测试，未提交、推送或合并；文档检查不作驾驶能力证据。
+- 下一步先核对初始化后实际速度的解释，再由 controller.py 第 50 行定位辅助方法并接第 89 行 act。保留此前 03 单步输出和 01 个人变道实验的待核对状态；不激活第二任务。
 
 ## 后续记录格式
 

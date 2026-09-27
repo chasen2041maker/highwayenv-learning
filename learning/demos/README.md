@@ -1,3 +1,5 @@
+> **旧实验来源保留。** 活动版本已归入 [vla_basic/experiments/highway_driving/demos](https://github.com/chasen2041maker/vla_basic/blob/main/experiments/highway_driving/demos/README.md)，今后在那里改写和运行课程实验。下方命令只作旧目录参考，本目录不再增加新课题；唯一进度在 [vla_basic/PROGRESS.md](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md)。
+
 # 按课题分开的驾驶实验
 
 每个小实验对应一个问题和一小段源码。以后按课题新增文件，不把所有练习不断堆进根目录的 `demo.py`。这里是实验索引和说明，当前学习状态统一记录在 [PROGRESS.md](../../PROGRESS.md)。

@@ -1,3 +1,5 @@
+> **阶段路线历史参考。** 最新课程结构、实验与唯一进度统一由 [vla_basic](https://github.com/chasen2041maker/vla_basic/blob/main/learning/BOOK.zh-CN.md) 管理。以下“两库分工”与新增文件位置保留为旧安排，不再作为当前指令；HighwayEnv 仅是大项目的早期阶段工具。
+
 # 从 HighwayEnv 实践入门自动驾驶
 
 这份路线说明方向和可观察的学习成果。当前走到哪里只看根目录 [PROGRESS.md](../PROGRESS.md)。学习者直接从实践学，Python 和领域概念在实验中补充，各阶段允许交叉推进。
@@ -22,7 +24,7 @@
 
 可观察成果：能解释一次“观察—决策—执行—重新观察”的过程，自己修改一条已经讲过的规则，并解释运行结果。
 
-需要原理时看：[目标速度与控制](https://github.com/chasen2041maker/vla_basic/blob/main/theory/01-target-speed-and-control.md)、[step 与反馈](https://github.com/chasen2041maker/vla_basic/blob/main/theory/02-step-and-feedback.md)。这是材料对应，不是新增两门先修课。
+需要原理时看：[目标速度与控制](https://github.com/chasen2041maker/vla_basic/blob/main/archive/theory/01-target-speed-and-control.md)、[step 与反馈](https://github.com/chasen2041maker/vla_basic/blob/main/archive/theory/02-step-and-feedback.md)。这是材料对应，不是新增两门先修课。
 
 ## 2. 带着问题进入源码
 
@@ -47,7 +49,7 @@
 
 可观察成果：学习者能够独立完成一个有限规则变化，并解释输入、判断、动作以及失败例子。需要拆成函数时再介绍函数和文件组织，不提前建立复杂策略框架。
 
-对应原理：[观察表、相对运动与规则边界](https://github.com/chasen2041maker/vla_basic/blob/main/theory/03-observation-and-relative-motion.md)。实际规则仍只在这里修改。
+对应原理：[观察表、相对运动与规则边界](https://github.com/chasen2041maker/vla_basic/blob/main/archive/theory/03-observation-and-relative-motion.md)。实际规则仍只在这里修改。
 
 ## 4. 用数据比较策略
 
@@ -89,6 +91,6 @@ HighwayEnv 的官方定位是自动驾驶决策仿真环境。它适合练习观
 
 后续可在已掌握的评测流程中加入 Agent 自动组织实验、定位日志片段和生成有证据链接的报告；碰撞等核心指标由可检查的程序计算，保留场景和随机种子。需要传感器和更完整的场景时，可评估 [CARLA](https://carla.readthedocs.io/en/latest/start_introduction/)；届时核对硬件与版本，不在当前阶段直接迁移环境。
 
-理论方向保留于 [vla_basic 知识路线](https://github.com/chasen2041maker/vla_basic/blob/main/ROADMAP.md)。如果具体任务超出 HighwayEnv 的适用范围，届时再选择实际需要的实践环境；不把理论库重新变成第二套实验工程。
+理论方向保留于 [vla_basic 知识路线](https://github.com/chasen2041maker/vla_basic/blob/main/archive/ROADMAP.md)。如果具体任务超出 HighwayEnv 的适用范围，届时再选择实际需要的实践环境；不把理论库重新变成第二套实验工程。
 
 历史教学组织参考：[vla_basic 改造前的项目实践方法](https://github.com/chasen2041maker/vla_basic/blob/4503a9cc9d0b67add5e85c28aa5d75e73f2725a7/LEARNING_METHOD.md)。当前内容、节奏与状态仍按本学习者的实际实验安排。

@@ -1,37 +1,15 @@
-# highwayenv-learning
+# HighwayEnv｜主项目使用的模拟器源码
 
-通过 HighwayEnv 仿真，从实践学习自动驾驶决策、车辆控制和强化学习。
+基于 [Farama Foundation / HighwayEnv](https://github.com/Farama-Foundation/HighwayEnv)，保留上游历史与 [MIT 许可证](LICENSE)，供 vla_basic 的早期驾驶交互与控制阶段使用。
 
-这是个人学习仓库，基于 [Farama Foundation / HighwayEnv](https://github.com/Farama-Foundation/HighwayEnv) 源码开展练习，保留上游历史和 [MIT 许可证](LICENSE)。当前练习是根据前车距离选择加速、减速与保持速度的规则驾驶程序。
+**完整智驾课程、学习者实验、评测证据与唯一进度都在 [vla_basic](https://github.com/chasen2041maker/vla_basic/blob/main/README.md)。** 这里保留 `highway_env/` 模拟器实现，按需读动作、控制器与运动源码。未来视觉、轨迹、VLA 和部署阶段继续由主项目组织，不以本模拟器限定课程范围。
 
-## 与理论仓库怎样配合
+- [当前学习进度](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md)
+- [课程实验与运行方式](https://github.com/chasen2041maker/vla_basic/blob/main/experiments/highway_driving/demos/README.md)
+- [章节路线](https://github.com/chasen2041maker/vla_basic/blob/main/learning/BOOK.zh-CN.md)
+- [迁移前历史](https://github.com/chasen2041maker/vla_basic/blob/main/archive/notes/2026-09-27-highway-learning-history.md)
 
-**这里负责动手、运行和实验；[vla_basic](https://github.com/chasen2041maker/vla_basic) 负责原理讲解与知识沉淀。两个仓库只走一条学习主线。**
-
-当前课题、运行结果、理解证据和下一步统一记录在本仓库 [PROGRESS.md](PROGRESS.md)，不在理论库复制第二份进度。想知道某个现象背后的原因，从 [理论反向索引](learning/THEORY_LINKS.md) 进入对应讲义；讲完再回到现有代码，不重新做一套旧 H001。
-
-当前驾驶程序、环境和运行方式保持不变。讲义建立不等于实验完成或已经掌握，也不要求先学完所有理论才能动手。
-
-## 学习入口
-
-- [运行脚本](demo.py)：车辆仿真、距离判断、目标速度档位和每局成绩单。
-- [分课题 demo](learning/demos/README.md)：独立保存源码验证实验，保留已有跟车脚本。
-- [当前学习进度](PROGRESS.md)：已做实验、待核对内容和下次接续点。
-- [理论反向索引](learning/THEORY_LINKS.md)：从当前代码问题跳到 vla_basic 的对应讲义。
-- [学习路线](learning/ROADMAP.md)：从实践读源码，到规则策略、实验评测与强化学习。
-- [历史学习记录](learning/LEARNING_LOG.md)：按执行者区分的实验与理解证据。
-- [教学约定](AGENTS.md)与[进度维护技能](.agents/skills/highway-learning-progress/SKILL.md)：每个教学小节或新实验结果后的记录方式。
-
-## 运行当前练习
-
-在已安装 Python 3.10 或以上及依赖的环境中，于仓库根目录执行：
-
-```shell
-python -m pip install -e .
-python demo.py
-```
-
-Windows 使用 Conda 时，如果 `noise` 安装报缺少 C++ 编译工具，可先运行 `conda install -c conda-forge noise`，再重新安装项目。当前本机环境与安装记录见 [PROGRESS.md](PROGRESS.md)。
+原 `demo.py`、`learning/demos/` 与记录保留为历史来源，不再作为另一套活动课程。现有 py310 环境仍通过安装导入这里的源码；用户无需因主项目归属调整重装依赖。
 
 ## HighwayEnv 上游说明
 
