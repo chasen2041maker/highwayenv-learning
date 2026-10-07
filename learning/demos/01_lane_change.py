@@ -21,6 +21,14 @@ def main(render_mode="human"):
 
     try:
         obs, info = env.reset(seed=0)
+        cfg = env.unwrapped.config
+        print("车道、背景车、时长、仿真频率：", cfg["lanes_count"], cfg["vehicles_count"], cfg["duration"], cfg["simulation_frequency"])
+        print("动作空间：", env.action_space)
+        print("观察空间：", env.observation_space)
+        print("obs 形状：", obs.shape)
+        print("车辆数配置：", env.unwrapped.config["vehicles_count"])
+        print("感知距离：", env.unwrapped.PERCEPTION_DISTANCE, "米")
+        print("reset 后 time 和 steps：", env.unwrapped.time, env.unwrapped.steps)
 
         # 下列内部数据只用于观察模拟器，不参与驾驶决策。
         vehicle = env.unwrapped.vehicle

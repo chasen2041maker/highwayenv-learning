@@ -4,7 +4,7 @@
 
 请读取 [vla_basic/PROGRESS.md](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md)，再进入其中唯一任务。本页只跳转，不维护当前题目、完成状态或另一份日志。
 
-本机接续优先打开 `C:\Users\Administrator\Desktop\职业生涯项目\vla_basic\PROGRESS.md`，并读取同目录 AGENTS.md。GitHub 链接只显示已推送版本；有本地教学更新时，以本地唯一进度为准。“短段学习、及时实践”覆盖整个主项目，不只覆盖 Highway 阶段或某一份讲义。
+本机接续优先打开 `C:\company\own\vla_basic\PROGRESS.md`，并读取同目录 AGENTS.md；旧 Administrator 桌面路径属于此前机器。GitHub 链接只显示已推送版本；有本地教学更新时，以本地唯一进度为准。“短段学习、及时实践”覆盖整个主项目，不只覆盖 Highway 阶段或某一份讲义。
 
 迁移前完整记录见[历史进度快照](https://github.com/chasen2041maker/vla_basic/blob/main/archive/notes/2026-09-27-highway-progress-history.md)，历史学习过程见[归档](https://github.com/chasen2041maker/vla_basic/blob/main/archive/notes/2026-09-27-highway-learning-history.md)。已有本人实验与解释仍有效，不因目录调整被清零。
 

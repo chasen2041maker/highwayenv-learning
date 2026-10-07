@@ -6,9 +6,13 @@
 
 每次教学先读同级 [vla_basic/AGENTS.md](https://github.com/chasen2041maker/vla_basic/blob/main/AGENTS.md)、[学习者画像](https://github.com/chasen2041maker/vla_basic/blob/main/docs/LEARNER_PROFILE.md)、[唯一进度](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md)与所指向任务，再按需要读取这里的 highway_env 源码。两项目共用主项目的一个当前任务，不维护独立课表。
 
-本机教学优先读取 `C:\Users\Administrator\Desktop\职业生涯项目\vla_basic` 下的最新本地文件；上面的 GitHub 链接是线上入口，可能尚未包含本地未推送更改，不用线上旧进度覆盖本地。用户已明确“短段学习、及时实践”适用于整个智驾项目及所有后续阶段，主项目 AGENTS 第 4 节的最新约定覆盖下面历史源码带读偏好。需要按实验问题选取代码与可观察变化，不要求先从头读完整个文件或模块。
+本机教学优先读取 `C:\company\own\vla_basic` 下的最新本地文件；用户于 2026-10-06（America/Denver）明确授权拉取最新代码，已在此恢复主项目教学资料。原 `C:\Users\Administrator\Desktop\职业生涯项目\vla_basic` 是此前机器的路径。上面的 GitHub 链接是线上入口，可能尚未包含本地未推送更改，不用线上旧进度覆盖本地。用户已明确“短段学习、及时实践”适用于整个智驾项目及所有后续阶段，主项目 AGENTS 第 4 节的最新约定覆盖下面历史源码带读偏好。需要按实验问题选取代码与可观察变化，不要求先从头读完整个文件或模块。
 
 2026-09-30 用户补充：当前希望由本对话系统带读 HighwayEnv 项目代码，认为持续读理论晦涩。按主项目 AGENTS 第 4 节最新源码教学约定，源码与实际现象优先，解释随需要补；不将返回 BOOK 或切换对话作为继续条件。主项目归属、唯一进度与新练习目录保持上述安排；此处不另建课表或进度。
+
+**2026-10-07 更新：本人同意改为项目驱动的三阶段路线，不再逐行读完全部代码，下面 10-06 这一条已被替代；当前清单见 vla_basic 的 `experiments/highway_driving/CURRENT_TASK.md`，教学约定见 vla_basic AGENTS 第 0 节。**
+
+〔已替代〕**2026-10-06（America/Denver）用户进一步明确：直接系统学习 HighwayEnv 项目的全部代码，以此完成整个智能驾驶学习项目的第一阶段。** 全部项目代码均在本阶段学习范围内：沿当前接续逐步读通驾驶运行主线，再覆盖其余场景、辅助模块和配套代码；结合实际运行、本人修改与解释理解各部分的作用。现有 5 天、40 小时安排作为近期推进计划，不将核心文件带读结束或其余模块的职责导航视为全项目学习完成，也不据此承诺在原预算内掌握全部代码。保持短段学习、及时实践和本人亲手写练习的方式；后续视觉、轨迹模型、VLA 与部署仍由 vla_basic 承接。此条保存学习目标，不新增课表、不推进完成状态；与旧范围描述冲突时以本条为准。
 
 现有 `demo.py` 和 `learning/demos/` 保留为历史来源；活动版本已逐字节归入 [vla_basic/experiments/highway_driving/demos](https://github.com/chasen2041maker/vla_basic/blob/main/experiments/highway_driving/demos/README.md)。新练习、策略和评测写到主项目，只在确需修改模拟器实现时编辑本库源码；不自动双向覆盖 Python 文件。
 
