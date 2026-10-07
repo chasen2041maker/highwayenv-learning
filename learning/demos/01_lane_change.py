@@ -7,14 +7,15 @@ import highway_env  # 导入后，Gymnasium 才认识 highway-v0
 def main(render_mode="human"):
     # 四车道、无其他车辆，先单独观察变道怎样执行。
     env = gym.make(
-        "highway-v0",
+        "highway-fast-v0",
         render_mode=render_mode,
         config={
             "lanes_count": 4,
-            "vehicles_count": 0,
+            "vehicles_count": 5,
             "initial_lane_id": 1,
-            "duration": 10,
+            "duration": 400,
             "policy_frequency": 1,
+            "real_time_rendering": True,  # 新增：按实际时间显示仿真过程
         },
     )
 

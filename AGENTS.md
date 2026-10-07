@@ -6,9 +6,15 @@
 
 每次教学先读同级 [vla_basic/AGENTS.md](https://github.com/chasen2041maker/vla_basic/blob/main/AGENTS.md)、[学习者画像](https://github.com/chasen2041maker/vla_basic/blob/main/docs/LEARNER_PROFILE.md)、[唯一进度](https://github.com/chasen2041maker/vla_basic/blob/main/PROGRESS.md)与所指向任务，再按需要读取这里的 highway_env 源码。两项目共用主项目的一个当前任务，不维护独立课表。
 
+本机教学优先读取 `C:\Users\Administrator\Desktop\职业生涯项目\vla_basic` 下的最新本地文件；上面的 GitHub 链接是线上入口，可能尚未包含本地未推送更改，不用线上旧进度覆盖本地。用户已明确“短段学习、及时实践”适用于整个智驾项目及所有后续阶段，主项目 AGENTS 第 4 节的最新约定覆盖下面历史源码带读偏好。需要按实验问题选取代码与可观察变化，不要求先从头读完整个文件或模块。
+
+2026-09-30 用户补充：当前希望由本对话系统带读 HighwayEnv 项目代码，认为持续读理论晦涩。按主项目 AGENTS 第 4 节最新源码教学约定，源码与实际现象优先，解释随需要补；不将返回 BOOK 或切换对话作为继续条件。主项目归属、唯一进度与新练习目录保持上述安排；此处不另建课表或进度。
+
 现有 `demo.py` 和 `learning/demos/` 保留为历史来源；活动版本已逐字节归入 [vla_basic/experiments/highway_driving/demos](https://github.com/chasen2041maker/vla_basic/blob/main/experiments/highway_driving/demos/README.md)。新练习、策略和评测写到主项目，只在确需修改模拟器实现时编辑本库源码；不自动双向覆盖 Python 文件。
 
-迁移前的进度与历史已保存在主项目 notes，原始运行证据也已归入主项目。旧学习证据继续有效，迁移不代表本人掌握，也不重做旧 H001。后续视觉、轨迹模型、VLA 与部署仍属于 vla_basic，按需要另选工具。
+迁移前的进度与历史已保存在主项目 archive/notes，原始运行证据归入 learning/evidence，新学习日志只维护 learning/LEARNING_LOG.md。旧学习证据继续有效，迁移不代表本人掌握，也不重做旧 H001。后续视觉、轨迹模型、VLA 与部署仍属于 vla_basic，按需要另选工具。
+
+**2026-10-01 当前变道练习入口更正：用户明确要求直接在自己的 HighwayEnv 项目中运行。该练习以本库 `learning/demos/01_lane_change.py` 为实际修改和运行入口，命令必须指向这一份，不再要求先改主项目中的同名文件。** 保留本人在此文件的改动，不自动双向同步；整条学习路线与唯一进度仍由 vla_basic 承接。
 
 ## 教学方式：直接从实践学
 
