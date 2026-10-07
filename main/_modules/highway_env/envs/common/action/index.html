@@ -316,7 +316,35 @@
           <article role="main">
             
             <h1>Source code for highway_env.envs.common.action</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="c1"># 动作类型速查：这个文件规定动作怎样表达，并把动作交给对应的车辆。</span>
+<span class="c1">#</span>
+<span class="c1"># 1. ContinuousAction：直接指定连续控制量。</span>
+<span class="c1">#    输入数组，例如 [0.5, -0.2]。默认同时控制加速度和转向角，</span>
+<span class="c1">#    两个输入各在 [-1, 1] 内，经过换算才得到加速度（m/s²）和转向角（弧度）。</span>
+<span class="c1">#    例如默认范围下 [0.5, -0.2] 对应加速度 2.5 m/s²、转向角约 -9°。</span>
+<span class="c1">#</span>
+<span class="c1"># 2. DiscreteAction：从预设的“加速度＋转向角”组合里选一个。</span>
+<span class="c1">#    输入整数编号。默认两个控制方向各取 -1、0、1，共有 9 种组合。</span>
+<span class="c1">#    例如编号 4 对应 [0, 0]，即零加速度、零转向；不会主动纠正车道偏差。</span>
+<span class="c1">#</span>
+<span class="c1"># 3. DiscreteMetaAction：发出调速、变道等高层目标指令。</span>
+<span class="c1">#    输入整数编号，由车辆控制器计算具体加速度和转向，让车辆逐渐接近目标。</span>
+<span class="c1">#    默认同时启用纵向与横向动作时：0 左变道、1 保持已有目标、2 右变道、</span>
+<span class="c1">#    3 调高目标速度、4 调低目标速度。保持已有目标时，控制器仍然工作。</span>
+<span class="c1">#    target_speeds 是可选速度列表，target_speed 是当前目标，speed 是实际速度。</span>
+<span class="c1">#</span>
+<span class="c1"># 4. MultiAgentAction：把一组动作分别交给多辆受控车。</span>
+<span class="c1">#    输入按受控车辆顺序排列的元组，例如 (2, 4)。每个元素的含义由内部</span>
+<span class="c1">#    action_config 选定的动作类型决定；内部可以使用上面的单车动作类型。</span>
+<span class="c1">#    例如内部使用默认 DiscreteMetaAction 时，(2, 4) 表示第一辆右变道、</span>
+<span class="c1">#    第二辆调低目标速度，是同一步中各车的指令，不是同一辆车的先后动作。</span>
+<span class="c1">#</span>
+<span class="c1"># 注意：动作编号的含义取决于动作类型和配置，不能跨类型直接套用。</span>
+<span class="c1"># DiscreteAction 的 4 是零控制量，默认 DiscreteMetaAction 的 4 是减速请求。</span>
+<span class="c1"># 文件末尾的 action_factory 按 config[&quot;type&quot;] 创建对应的动作对象；</span>
+<span class="c1"># 策略负责选择动作，动作对象负责解释和转发，具体运动由车辆与仿真推进。</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
